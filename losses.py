@@ -320,6 +320,8 @@ class SupConLoss(nn.Module):
 
         return sup_contrastive_loss
 
+
+
 #TODO: add distributed computation
 class OARLoss(nn.Module):
     """

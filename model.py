@@ -1,7 +1,7 @@
 from lightly.models.modules.heads import SimCLRProjectionHead
 from torchvision import models
 import torch.nn as nn
-from losses import SupConLoss, OARLoss, SupervisedVICRegLoss
+from losses import SupConLoss, OARLoss, SupervisedVICRegLoss, SupDCLLoss, SupBarlowTwinsLoss
 import pytorch_lightning as pl
 import torchmetrics
 import torch
@@ -9,28 +9,29 @@ import torch.optim as optim
 from lars import LARS
 
 
-class ResNet18_CIFAR(nn.Module):
+class ResNet50_CIFAR(nn.Module):
     def __init__(self, num_classes=100):
-        super(ResNet18_CIFAR, self).__init__()
-        # Load a pre-initialized ResNet-18 model without pretrained weights
-        self.resnet18 = models.resnet18(weights=None)
+        super(ResNet50_CIFAR, self).__init__()
+        # Load a pre-initialized ResNet-50 model without pretrained weights
+        self.resnet50 = models.resnet50(weights=None)
 
         # Modify the initial convolutional layer to better suit CIFAR
-        self.resnet18.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.resnet18.maxpool = nn.Identity()  # Remove the max pooling
-        self.resnet18.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
+        self.resnet50.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        self.resnet50.maxpool = nn.Identity()  # Remove the max pooling
+        self.resnet50.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
 
     def forward(self, x):
-        return self.resnet18(x)
+        return self.resnet50(x)
 
 class TreeCLR(pl.LightningModule):
-    def __init__(self, learning_rate, optimizer, lr_schedule, temperature, ):
+    def __init__(self, learning_rate, optimizer, lr_schedule, temperature, criterion="NTXent-OA"):
         super(TreeCLR, self).__init__()
 
-        self.encoder = ResNet18_CIFAR()
+        self.encoder = ResNet50_CIFAR()
         self.projection_head = SimCLRProjectionHead(input_dim=512, hidden_dim=256, output_dim=128)
         
-        self.criterion = SupTreeConLoss(temperature=temperature, use_distributed=True)
+        if criterion == "NTXent-OA":
+            self.criterion = SupTreeConLoss(temperature=temperature, use_distributed=True)
         
         self.save_hyperparameters()
         self.optimizer = optimizer
