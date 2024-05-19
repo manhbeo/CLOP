@@ -1,8 +1,7 @@
 from lightly.models.modules.heads import SimCLRProjectionHead
 from torchvision import models
 import torch.nn as nn
-from OARs.NTXent import SupTreeConLoss
-from SupConLoss import SupConLoss
+from losses import SupConLoss, OARLoss, SupervisedVICRegLoss
 import pytorch_lightning as pl
 import torchmetrics
 import torch
