@@ -3,6 +3,7 @@ from torchvision import models
 import torch.nn as nn
 from SupTreeConLoss import SupTreeConLoss 
 # adding some losses here
+from OARLoss import OARLoss
 import pytorch_lightning as pl
 import torch
 from knn_predict import knn_predict
