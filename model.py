@@ -35,11 +35,16 @@ class ResNet50_ImgNet(nn.Module):
 
 # TODO: consider EMA
 class TreeCLR(pl.LightningModule):
-    def __init__(self, learning_rate=4.8, lr_schedule="exp", optimizer="lars", temperature=0.192, criterion="nxt_ent", feature_bank_size=1024, dataset="cifar100", OAR=True):
+    def __init__(self, learning_rate=4.8, lr_schedule="exp", optimizer="lars", temperature=0.192, criterion="nxt_ent", feature_bank_size=4096, dataset="cifar100", OAR=True):
         super(TreeCLR, self).__init__()
 
-        if dataset == "cifar100" or dataset == "cifar10":
+        num_classes = 0
+        if dataset == "cifar100":
             self.encoder = ResNet50_CIFAR()
+            num_classes = 100
+        if dataset == "cifar10":
+            self.encoder = ResNet50_CIFAR()
+            num_classes = 10
         elif dataset == "imagenet":
             self.encoder = ResNet50_ImgNet()
 
@@ -50,6 +55,8 @@ class TreeCLR(pl.LightningModule):
             self.criterion = NTXentLoss(temperature, gather_distributed=True)
         elif criterion == "barlow":
             self.criterion = BarlowTwinsLoss()
+        if OAR == True:
+            self.criterion += OAR(num_classes)
 
         self.optimizer = optimizer
         self.learning_rate = learning_rate
