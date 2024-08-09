@@ -35,7 +35,7 @@ class ResNet50_ImgNet(nn.Module):
 
 # TODO: consider EMA
 class TreeCLR(pl.LightningModule):
-    def __init__(self, learning_rate=4.8, lr_schedule="exp", optimizer="lars", temperature=0.192, criterion="nxt_ent", feature_bank_size=4096, dataset="cifar100", OAR=True):
+    def __init__(self, learning_rate=4.8, lr_schedule="exp", optimizer="lars", criterion="nxt_ent", feature_bank_size=4096, dataset="cifar100", OAR=True):
         super(TreeCLR, self).__init__()
 
         num_classes = 0
@@ -50,11 +50,11 @@ class TreeCLR(pl.LightningModule):
 
         self.projection_head = SimCLRProjectionHead(input_dim=2048, hidden_dim=256, output_dim=128)
         
-        #fix this
+        #focus on the implementation detail in the paper
         if criterion == "nxt_ent":
-            self.criterion = NTXentLoss(temperature, gather_distributed=True)
+            self.criterion = NTXentLoss(temperature=0.1, gather_distributed=True)
         elif criterion == "barlow":
-            self.criterion = BarlowTwinsLoss()
+            self.criterion = BarlowTwinsLoss(lambda_param=5e-3, gather_distributed=True) #lambda_param?
         if OAR == True:
             self.criterion += OAR(num_classes)
 
