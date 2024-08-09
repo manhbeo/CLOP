@@ -1,9 +1,11 @@
 from lightly.models.modules.heads import SimCLRProjectionHead
 from torchvision import models
 import torch.nn as nn
-from SupTreeConLoss import SupTreeConLoss 
-# adding some losses here
 from OARLoss import OARLoss
+from lightly.loss.barlow_twins_loss import BarlowTwinsLoss
+from lightly.loss.dcl_loss import DCLLoss
+from lightly.loss.vicreg_loss import VICRegLoss
+from lightly.loss.ntx_ent_loss import NTXentLoss
 import pytorch_lightning as pl
 import torch
 from knn_predict import knn_predict
@@ -33,21 +35,25 @@ class ResNet50_ImgNet(nn.Module):
 
 # TODO: consider EMA
 class TreeCLR(pl.LightningModule):
-    def __init__(self, learning_rate=1.2, lr_schedule="exp", optimizer="lars", temperature=0.192, lambda_val=0.5, feature_bank_size=128, dataset = "imagenet", have_coarse_label=True):
+    def __init__(self, learning_rate=4.8, lr_schedule="exp", optimizer="lars", temperature=0.192, criterion="nxt_ent", feature_bank_size=1024, dataset="cifar100", OAR=True):
         super(TreeCLR, self).__init__()
 
-        if dataset == "cifar100":
+        if dataset == "cifar100" or dataset == "cifar10":
             self.encoder = ResNet50_CIFAR()
         elif dataset == "imagenet":
             self.encoder = ResNet50_ImgNet()
+
         self.projection_head = SimCLRProjectionHead(input_dim=2048, hidden_dim=256, output_dim=128)
         
-        self.criterion = SupTreeConLoss(temperature=temperature, lambda_val=lambda_val, use_distributed=True)
+        #fix this
+        if criterion == "nxt_ent":
+            self.criterion = NTXentLoss(temperature, gather_distributed=True)
+        elif criterion == "barlow":
+            self.criterion = BarlowTwinsLoss()
 
         self.optimizer = optimizer
         self.learning_rate = learning_rate
         self.lr_schedule = lr_schedule
-        self.have_coarse_label = have_coarse_label
         self.feature_bank_size = feature_bank_size
         self._init_feature_bank(self.feature_bank_size)
     
