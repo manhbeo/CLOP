@@ -14,7 +14,7 @@ def sweep(args):
       wandb.init()
       data_module = CIFARDataModule(batch_size=wandb.config.batch_size, dataset=args.dataset)
       model = CLOA(
-          batch_size=wandb.config.batch_size,
+          learning_rate=wandb.config.learning_rate,
           lr_schedule=wandb.config.lr_schedule,
           optimizer=wandb.config.optimizer,
           temperature=wandb.config.temperature,
@@ -51,7 +51,7 @@ def train(learning_rate, optimizer, lr_schedule, temperature, lambda_val, epochs
     if pretrain_dir != None: #if pretrain_dir exist
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOA(batch_size, lr_schedule, optimizer, temperature, lambda_val, batch_size, dataset, have_coarse_label)
+        model = CLOA(learning_rate, lr_schedule, optimizer, temperature, lambda_val, batch_size, dataset, have_coarse_label)
     
     # if dataset == "imagenet":
     #     data_module = ImageNetDataModule(batch_size=batch_size)

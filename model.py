@@ -32,16 +32,16 @@ class ResNet50_ImgNet(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, batch_size=256, lr_schedule="exp", optimizer="lars", criterion="nxt_ent", feature_bank_size=4096, dataset="cifar100", OAR=True):
+    def __init__(self, learning_rate=5.6, lr_schedule="exp", optimizer="lars", criterion="nxt_ent", feature_bank_size=4096, dataset="cifar100", OAR=True):
         super(CLOA, self).__init__()
 
-        num_classes = 0
+        self.num_classes = 0
         if dataset == "cifar100":
             self.encoder = ResNet50_CIFAR()
-            num_classes = 100
+            self.num_classes = 100
         if dataset == "cifar10":
             self.encoder = ResNet50_CIFAR()
-            num_classes = 10
+            self.num_classes = 10
         elif dataset == "imagenet":
             self.encoder = ResNet50_ImgNet()
         
@@ -61,11 +61,12 @@ class CLOA(pl.LightningModule):
             self.projection_head = SimCLRProjectionHead(output_dim=128)
             # batch_size = 256
         if OAR == True:
-            self.criterion += OARLoss(num_classes)
+            self.criterion += OARLoss(self.num_classes)
 
-        self.batch_size = batch_size
+        # self.batch_size = batch_size
         self.optimizer = optimizer
-        self.learning_rate = 0.3 * self.batch_size / 256
+        # self.learning_rate = 0.3 * self.batch_size / 256
+        self.learning_rate = learning_rate
         self.lr_schedule = lr_schedule
         self.feature_bank_size = feature_bank_size
         self._init_feature_bank(self.feature_bank_size)
@@ -115,7 +116,7 @@ class CLOA(pl.LightningModule):
         z_i = self.forward(x_i)
         k = 100
 
-        pred_labels = knn_predict(z_i, self.feature_bank, self.feature_labels, classes=100, knn_k=k, knn_t=0.1)
+        pred_labels = knn_predict(z_i, self.feature_bank, self.feature_labels, classes=self.num_classes, knn_k=k, knn_t=0.1)
         correct = (pred_labels == fine_label).sum().item()
         knn_acc = correct / x_i.size(0)
         self.log(f'val_acc', knn_acc, batch_size=x_i.size(0), sync_dist=True)
