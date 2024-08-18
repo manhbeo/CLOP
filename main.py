@@ -1,6 +1,5 @@
 from model import TreeCLR
-from data_module import CIFAR100DataModule, CIFAR100EvaluationDataModule, ImageNetDataModule, ImageNetEvaluationDataModule
-# add the data_module here (maybe do not need a file)
+from data_module import CIFARDataModule, CIFAREvaluationDataModule#, ImageNetDataModule, ImageNetEvaluationDataModule
 from pytorch_lightning.callbacks import ModelCheckpoint
 import wandb
 import pytorch_lightning as pl
@@ -9,11 +8,11 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch
 
+#TODO: start with adam
 def sweep(args):
     def sweep_train():
       wandb.init()
-
-      data_module = CIFAR100DataModule(batch_size=wandb.config.batch_size)
+      data_module = CIFARDataModule(batch_size=wandb.config.batch_size, dataset=args.dataset)
       model = TreeCLR(
           learning_rate=wandb.config.learning_rate,
           lr_schedule=wandb.config.lr_schedule,
@@ -23,7 +22,7 @@ def sweep(args):
           feature_bank_size=wandb.config.batch_size
       )
 
-      wandb_logger = pl.loggers.WandbLogger(project="Sweep_Tree_CLR")
+      wandb_logger = pl.loggers.WandbLogger(project="CLOA_Sweep")
 
       checkpoint_callback = ModelCheckpoint(
           monitor='val_loss',
@@ -44,9 +43,9 @@ def sweep(args):
                     deterministic=True)
 
       trainer.fit(model, data_module)
-
-
     return sweep_train
+
+
 
 def train(learning_rate, optimizer, lr_schedule, temperature, lambda_val, epochs, batch_size, dataset, pretrain_dir = None, have_coarse_label=True):
     if pretrain_dir != None: #if pretrain_dir exist
@@ -54,12 +53,12 @@ def train(learning_rate, optimizer, lr_schedule, temperature, lambda_val, epochs
     else: 
         model = TreeCLR(learning_rate, lr_schedule, optimizer, temperature, lambda_val, batch_size, dataset, have_coarse_label)
     
-    if dataset == "imagenet":
-        data_module = ImageNetDataModule(batch_size=batch_size)
-        wandb_logger = pl.loggers.WandbLogger(project="Train_Tree_CLR_ImageNet")
-    elif dataset == "cifar100":
-        data_module = CIFAR100DataModule(batch_size=batch_size)
-        wandb_logger = pl.loggers.WandbLogger(project="Train_Tree_CLR")
+    # if dataset == "imagenet":
+    #     data_module = ImageNetDataModule(batch_size=batch_size)
+    #     wandb_logger = pl.loggers.WandbLogger(project="Train_Tree_CLR_ImageNet")
+    # elif dataset == "cifar100": #TODO: fix to begin with
+    data_module = CIFARDataModule(batch_size=batch_size, dataset=dataset)
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train")
 
     #Save the model after each 5 epochs
     checkpoint_callback = ModelCheckpoint(
@@ -87,14 +86,15 @@ def train(learning_rate, optimizer, lr_schedule, temperature, lambda_val, epochs
 def eval(pretrain_dir, batch_size, epochs, dataset):
     model = TreeCLR.load_from_checkpoint(pretrain_dir)
 
-    if dataset == "cifar100":
-        data_module = CIFAR100EvaluationDataModule(batch_size=batch_size)
-        wandb_logger = pl.loggers.WandbLogger(project="Eval_Tree_CLR")
-        num_classes = 100
-    elif dataset == "imagenet":
-        data_module = ImageNetEvaluationDataModule(batch_size=batch_size)
-        wandb_logger = pl.loggers.WandbLogger(project="Eval_Tree_CLR_ImageNet")
-        num_classes = 1000
+    # if dataset == "cifar100":
+    data_module = CIFAREvaluationDataModule(batch_size=batch_size, dataset=dataset)
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval")
+    if dataset == "cifar100": num_classes = 100
+    elif dataset == "cifar10": num_classes = 10
+    # elif dataset == "imagenet":
+    #     data_module = ImageNetEvaluationDataModule(batch_size=batch_size)
+    #     wandb_logger = pl.loggers.WandbLogger(project="Eval_Tree_CLR_ImageNet")
+    #     num_classes = 1000
 
     
     linear_classifier = LinearClassifier(
@@ -125,14 +125,15 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
     trainer.fit(linear_classifier, datamodule=data_module)
 
 def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
-    if dataset == "cifar100":
-        data_module = CIFAR100EvaluationDataModule(batch_size=batch_size)
-        wandb_logger = pl.loggers.WandbLogger(project="Test_Tree_CLR_CIFAR100")
-        num_classes = 100
-    elif dataset == "imagenet":
-        data_module = CIFAR100EvaluationDataModule(batch_size=batch_size)
-        wandb_logger = pl.loggers.WandbLogger(project="Test_Tree_CLR_ImgNet")
-        num_classes = 1000
+    # if dataset == "cifar100":
+    data_module = CIFAREvaluationDataModule(batch_size=batch_size)
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Test")
+    if dataset == "cifar100": num_classes = 100
+    elif dataset == "cifar10": num_classes = 10
+    # elif dataset == "imagenet":
+    #     data_module = CIFAR100EvaluationDataModule(batch_size=batch_size)
+    #     wandb_logger = pl.loggers.WandbLogger(project="Test_Tree_CLR_ImgNet")
+    #     num_classes = 1000
 
     trainer = pl.Trainer(logger=wandb_logger,
                     devices="auto",

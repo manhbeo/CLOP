@@ -1,11 +1,8 @@
-from lightly.models.modules.heads import SimCLRProjectionHead
+from lightly.models.modules.heads import SimCLRProjectionHead, BarlowTwinsProjectionHead, VICRegProjectionHead
 from torchvision import models
 import torch.nn as nn
 from OARLoss import OARLoss
-from lightly.loss.barlow_twins_loss import BarlowTwinsLoss
-from lightly.loss.dcl_loss import DCLLoss
-from lightly.loss.vicreg_loss import VICRegLoss
-from lightly.loss.ntx_ent_loss import NTXentLoss
+from losses import BarlowTwinsLoss, DCLLoss, VICRegLoss, NTXentLoss
 import pytorch_lightning as pl
 import torch
 from knn_predict import knn_predict
@@ -33,9 +30,9 @@ class ResNet50_ImgNet(nn.Module):
     def forward(self, x):
         return self.resnet50(x)
 
-# TODO: consider EMA
+# TODO: consider EMA. do experiment with it 
 class TreeCLR(pl.LightningModule):
-    def __init__(self, learning_rate=4.8, lr_schedule="exp", optimizer="lars", criterion="nxt_ent", feature_bank_size=4096, dataset="cifar100", OAR=True):
+    def __init__(self, batch_size=256, lr_schedule="exp", optimizer="lars", criterion="nxt_ent", feature_bank_size=4096, dataset="cifar100", OAR=True):
         super(TreeCLR, self).__init__()
 
         num_classes = 0
@@ -47,19 +44,28 @@ class TreeCLR(pl.LightningModule):
             num_classes = 10
         elif dataset == "imagenet":
             self.encoder = ResNet50_ImgNet()
-
-        self.projection_head = SimCLRProjectionHead(input_dim=2048, hidden_dim=256, output_dim=128)
         
-        #focus on the implementation detail in the paper
+
         if criterion == "nxt_ent":
             self.criterion = NTXentLoss(temperature=0.1, gather_distributed=True)
+            self.projection_head = SimCLRProjectionHead(output_dim=128)
         elif criterion == "barlow":
-            self.criterion = BarlowTwinsLoss(lambda_param=5e-3, gather_distributed=True) #lambda_param?
+            self.criterion = BarlowTwinsLoss(lambda_param=5e-3, gather_distributed=True)
+            self.projection_head = BarlowTwinsProjectionHead(output_dim = 8192)
+            # batch_size = 256
+        elif criterion == "vicreg":
+            self.criterion = VICRegLoss(gather_distributed=True)
+            self.projection_head = VICRegProjectionHead(output_dim = 8192)
+        elif criterion == "dcl":
+            self.criterion = DCLLoss(gather_distributed=True)
+            self.projection_head = SimCLRProjectionHead(output_dim=128)
+            # batch_size = 256
         if OAR == True:
-            self.criterion += OAR(num_classes)
+            self.criterion += OARLoss(num_classes)
 
+        self.batch_size = batch_size
         self.optimizer = optimizer
-        self.learning_rate = learning_rate
+        self.learning_rate = 0.3 * self.batch_size / 256
         self.lr_schedule = lr_schedule
         self.feature_bank_size = feature_bank_size
         self._init_feature_bank(self.feature_bank_size)
