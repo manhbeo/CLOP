@@ -1,4 +1,4 @@
-from model import TreeCLR
+from model import CLOA
 from data_module import CIFARDataModule, CIFAREvaluationDataModule#, ImageNetDataModule, ImageNetEvaluationDataModule
 from pytorch_lightning.callbacks import ModelCheckpoint
 import wandb
@@ -8,13 +8,13 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch
 
-#TODO: start with adam
+#TODO: start with adamw
 def sweep(args):
     def sweep_train():
       wandb.init()
       data_module = CIFARDataModule(batch_size=wandb.config.batch_size, dataset=args.dataset)
-      model = TreeCLR(
-          learning_rate=wandb.config.learning_rate,
+      model = CLOA(
+          batch_size=wandb.config.batch_size,
           lr_schedule=wandb.config.lr_schedule,
           optimizer=wandb.config.optimizer,
           temperature=wandb.config.temperature,
@@ -49,9 +49,9 @@ def sweep(args):
 
 def train(learning_rate, optimizer, lr_schedule, temperature, lambda_val, epochs, batch_size, dataset, pretrain_dir = None, have_coarse_label=True):
     if pretrain_dir != None: #if pretrain_dir exist
-        model = TreeCLR.load_from_checkpoint(pretrain_dir)
+        model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
-        model = TreeCLR(learning_rate, lr_schedule, optimizer, temperature, lambda_val, batch_size, dataset, have_coarse_label)
+        model = CLOA(batch_size, lr_schedule, optimizer, temperature, lambda_val, batch_size, dataset, have_coarse_label)
     
     # if dataset == "imagenet":
     #     data_module = ImageNetDataModule(batch_size=batch_size)
@@ -67,7 +67,7 @@ def train(learning_rate, optimizer, lr_schedule, temperature, lambda_val, epochs
         dirpath='',
         filename='model-{epoch:04d}-{val_acc:.2f}',
         save_weights_only=True,
-        every_n_epochs=5,
+        every_n_epochs=3,
         verbose=True
     )
 
@@ -84,7 +84,7 @@ def train(learning_rate, optimizer, lr_schedule, temperature, lambda_val, epochs
     trainer.fit(model, data_module)
 
 def eval(pretrain_dir, batch_size, epochs, dataset):
-    model = TreeCLR.load_from_checkpoint(pretrain_dir)
+    model = CLOA.load_from_checkpoint(pretrain_dir)
 
     # if dataset == "cifar100":
     data_module = CIFAREvaluationDataModule(batch_size=batch_size, dataset=dataset)
@@ -107,7 +107,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
         dirpath='',
         filename='model-{epoch:04d}-{val_top1:.2f}',
         save_weights_only=True,
-        every_n_epochs=1,
+        every_n_epochs=3,
         verbose=True
     )
 
@@ -146,7 +146,7 @@ def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
     data_module.prepare_data()
     data_module.setup("test")
     
-    model = TreeCLR.load_from_checkpoint(pretrain_dir)
+    model = CLOA.load_from_checkpoint(pretrain_dir)
     linear_classifier = LinearClassifier(
         model, batch_size, feature_dim=128, num_classes=num_classes, topk=(1,5), freeze_model=True
     )

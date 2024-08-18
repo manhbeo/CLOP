@@ -31,9 +31,9 @@ class ResNet50_ImgNet(nn.Module):
         return self.resnet50(x)
 
 # TODO: consider EMA. do experiment with it 
-class TreeCLR(pl.LightningModule):
+class CLOA(pl.LightningModule):
     def __init__(self, batch_size=256, lr_schedule="exp", optimizer="lars", criterion="nxt_ent", feature_bank_size=4096, dataset="cifar100", OAR=True):
-        super(TreeCLR, self).__init__()
+        super(CLOA, self).__init__()
 
         num_classes = 0
         if dataset == "cifar100":
