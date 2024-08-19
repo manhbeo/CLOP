@@ -8,11 +8,11 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch
 
-def train(learning_rate, optimizer, lr_schedule, temperature, lambda_val, epochs, batch_size, dataset, pretrain_dir = None, have_coarse_label=True):
+def train(learning_rate, optimizer, lr_schedule, epochs, batch_size, dataset, pretrain_dir = None, OAR=True, criterion="nxt_ent"):
     if pretrain_dir != None: #if pretrain_dir exist
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOA(learning_rate, lr_schedule, optimizer, temperature, lambda_val, batch_size, dataset, have_coarse_label)
+        model = CLOA(learning_rate, lr_schedule, optimizer, criterion, batch_size, dataset, OAR)
     
     data_module = CIFARDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train")
@@ -40,15 +40,20 @@ def train(learning_rate, optimizer, lr_schedule, temperature, lambda_val, epochs
 
     trainer.fit(model, data_module)
 
-def eval(pretrain_dir, batch_size, epochs, dataset):
+def eval(pretrain_dir, batch_size, epochs, dataset, criterion):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     data_module = CIFAREvaluationDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval")
     if dataset == "cifar100": num_classes = 100
     elif dataset == "cifar10": num_classes = 10
     
+    if criterion == "nxt_ent" or criterion == "dcl": 
+        feature_dim = 128
+    elif criterion == "barlow" or criterion == "vicreg": 
+        feature_dim = 4096
+
     linear_classifier = LinearClassifier(
-        model, batch_size, feature_dim=128, num_classes=num_classes, topk=(1,5), freeze_model=True,
+        model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True,
     )
 
     checkpoint_callback = ModelCheckpoint(
@@ -73,7 +78,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
     trainer.fit(linear_classifier, datamodule=data_module)
 
 
-def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
+def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset, criterion):
     data_module = CIFAREvaluationDataModule(batch_size=batch_size)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Test")
     if dataset == "cifar100": num_classes = 100
@@ -91,8 +96,12 @@ def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
     data_module.setup("test")
     
     model = CLOA.load_from_checkpoint(pretrain_dir)
+    if criterion == "nxt_ent" or criterion == "dcl": 
+        feature_dim = 128
+    elif criterion == "barlow" or criterion == "vicreg": 
+        feature_dim = 4096
     linear_classifier = LinearClassifier(
-        model, batch_size, feature_dim=128, num_classes=num_classes, topk=(1,5), freeze_model=True
+        model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True,
     )
     linear_classifier.load_state_dict(torch.load(pretrain_linear_classifier_dir)['state_dict'])
 
@@ -108,7 +117,6 @@ if __name__ == '__main__':
     parser.add_argument("--lr", type=float, default=1.2)
     parser.add_argument("--opt", type=str, default="lars")
     parser.add_argument("--lr_schedule", type=str, default="exp")
-    parser.add_argument("--temp", type=float, default=0.192)
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--pretrain_model", type=str)
     parser.add_argument("--pretrain_linear_classifier_dir", type=str)
@@ -119,8 +127,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_model, args.batch_size, args.epochs, args.dataset)
+        eval(args.pretrain_model, args.batch_size, args.epochs, args.dataset, args.criterion)
     elif args.test:
-        test(args.pretrain_model, args.pretrain_linear_classifier_dir, args.batch_size, args.dataset)
+        test(args.pretrain_model, args.pretrain_linear_classifier_dir, args.batch_size, args.dataset, args.criterion)
     else:
-        train(args.lr, args.opt, args.lr_schedule, args.temp, args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR)
+        train(args.lr, args.opt, args.lr_schedule, args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR, args.criterion)
