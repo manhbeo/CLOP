@@ -32,7 +32,7 @@ class ResNet50_ImgNet(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, learning_rate=5.6, lr_schedule="exp", optimizer="lars", criterion="nxt_ent", feature_bank_size=4096, dataset="cifar100", OAR=True):
+    def __init__(self, learning_rate=6.5, lr_schedule="exp", optimizer="lars", criterion="nxt_ent", feature_bank_size=4096, dataset="cifar100", OAR=True):
         super(CLOA, self).__init__()
 
         self.num_classes = 0

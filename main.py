@@ -12,14 +12,15 @@ import torch
 def sweep(args):
     def sweep_train():
       wandb.init()
-      data_module = CIFARDataModule(batch_size=wandb.config.batch_size, dataset=args.dataset)
+      data_module = CIFARDataModule(batch_size=wandb.config.batch_size, dataset=wandb.config.dataset)
       model = CLOA(
           learning_rate=wandb.config.learning_rate,
           lr_schedule=wandb.config.lr_schedule,
           optimizer=wandb.config.optimizer,
           temperature=wandb.config.temperature,
-          lambda_val=wandb.config.lambda_val,
-          feature_bank_size=wandb.config.batch_size
+          feature_bank_size=wandb.config.batch_size,
+          OAR=wandb.config.OAR,
+          criterion=wandb.config.criterion
       )
 
       wandb_logger = pl.loggers.WandbLogger(project="CLOA_Sweep")
@@ -34,7 +35,7 @@ def sweep(args):
 
       trainer = pl.Trainer(logger=wandb_logger,
                     devices="auto",
-                    max_epochs = args.epochs,
+                    max_epochs = wandb.config.epochs,
                     accelerator="auto",
                     strategy="ddp",
                     sync_batchnorm=True,
@@ -166,13 +167,13 @@ if __name__ == '__main__':
     parser.add_argument("--opt", type=str, default="lars")
     parser.add_argument("--lr_schedule", type=str, default="exp")
     parser.add_argument("--temp", type=float, default=0.192)
-    parser.add_argument("--have_coarse_label", action='store_true')
-    parser.add_argument("--lambda_val", type=float, default=0.5)
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--pretrain_model", type=str)
     parser.add_argument("--pretrain_linear_classifier_dir", type=str)
-    parser.add_argument("--batch_size", type=int, default=512)
-    parser.add_argument("--dataset", type=str, default="imagenet")
+    parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--dataset", type=str, default="cifar100")
+    parser.add_argument("--OAR", action='store_true')
+    parser.add_argument("--criterion", type=str, default="nxt_ent")
 
 
     args = parser.parse_args()
@@ -186,29 +187,35 @@ if __name__ == '__main__':
             },
             'parameters': {
                 'learning_rate': {
-                    'min': 0.1,
-                    'max': 6.5
+                    'values': [6.5]
                 },
                 'temperature': {
-                    "min":0.1,
-                    "max":1.0
-                },
-                'lambda_val': {
-                    "min":0.0,
-                    "max":1.0
+                    'values': [0.2]
                 },
                 'optimizer':{
-                    'values': ['sgd', 'adam', 'adamw']
+                    'values': ["lars"]
                 },
                 'lr_schedule':{
-                    'values':['linear', 'cosine', 'exp']
+                    'values':['exp']
                 },
                 'batch_size': {
-                    'values': [256, 512, 1024]
+                    'values': [512]
+                },
+                "OAR": {
+                    "values": [False]
+                },
+                'criterion': {
+                    "values": ["nxt_ent", "barlow", "vicreg", "dcl"]
+                },
+                "dataset": {
+                    "values": ["cifar10", "cifar100"]
+                }, 
+                "epochs": {
+                    "values": [200]
                 }
             }
         }
-        sweep_id = wandb.sweep(sweep_train_config, project="Sweep_Tree_CLR")
+        sweep_id = wandb.sweep(sweep_train_config, project="CLOA_Sweep")
         wandb.agent(sweep_id, sweep(args))
 
     elif args.eval:
@@ -216,4 +223,4 @@ if __name__ == '__main__':
     elif args.test:
         test(args.pretrain_model, args.pretrain_linear_classifier_dir, args.batch_size, args.dataset)
     else:
-        train(args.lr, args.opt, args.lr_schedule, args.temp, args.lambda_val, args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.have_coarse_label)
+        train(args.lr, args.opt, args.lr_schedule, args.temp, args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR)
