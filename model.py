@@ -47,7 +47,6 @@ class CLOA(pl.LightningModule):
             self.num_classes = 10
         elif dataset == "imagenet":
             self.encoder = ResNet50_ImgNet()
-        
 
         if criterion == "nxt_ent":
             self.criterion = NTXentLoss(temperature=0.1, gather_distributed=True)
