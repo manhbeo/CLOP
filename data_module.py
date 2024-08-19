@@ -10,11 +10,12 @@ class CustomCIFARDataset(Dataset):
         self.transform = transform
         if dataset == "cifar100":
             self.dataset = datasets.CIFAR100(root=root, train=train, download=True)
+            file_path = os.path.join(root, 'cifar-100-python', 'train' if train else 'test')
         if dataset == "cifar10":
             self.dataset = datasets.CIFAR10(root=root, train=train, download=True)
+            file_path = os.path.join(root, 'cifar-10-python', 'train' if train else 'test')
 
         # Load the training or testing data
-        file_path = os.path.join(root, 'cifar-100-python', 'train' if train else 'test')
         with open(file_path, 'rb') as f:
             self.data = pickle.load(f, encoding='latin1')
         self.fine_labels = self.data['fine_labels']
