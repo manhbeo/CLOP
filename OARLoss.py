@@ -18,7 +18,7 @@ class OARLoss(nn.Module):
         
         # Initialize anchors using SVD to ensure they are orthogonal
         random_matrix = torch.randn(num_classes, embedding_dim)
-        U, _, V = torch.svd(random_matrix)
+        _, _, V = torch.svd(random_matrix)
         self.anchors = nn.Parameter(V[:, :num_classes].t(), requires_grad=False)  # Use the right singular vectors
         
         # Broadcast anchors to ensure all processes have the same anchors
