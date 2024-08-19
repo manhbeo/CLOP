@@ -13,7 +13,7 @@ class CustomCIFARDataset(Dataset):
             file_path = os.path.join(root, 'cifar-100-python', 'train' if train else 'test')
         if dataset == "cifar10":
             self.dataset = datasets.CIFAR10(root=root, train=train, download=True)
-            file_path = os.path.join(root, 'cifar-10-python', 'train' if train else 'test')
+            file_path = os.path.join(root, 'cifar-10-batches-py', 'data_batch_1' if train else 'test_batch')
 
         # Load the training or testing data
         with open(file_path, 'rb') as f:
