@@ -94,17 +94,15 @@ class CLOA(pl.LightningModule):
         return z
 
     def shared_step(self, batch):
-        (x_i, x_j), fine_label, coarse_label = batch
-        if not self.have_coarse_label: 
-          coarse_label = None
+        (x_i, x_j), fine_label = batch
         z_i = self.forward(x_i)
         z_j = self.forward(x_j)
 
-        loss = self.criterion(z_i, z_j, fine_label, coarse_label)
+        loss = self.criterion(z_i, z_j, fine_label)
         return loss
 
     def training_step(self, batch, batch_idx):
-        (x_i, _), fine_label, _ = batch
+        (x_i, _), fine_label = batch
         z_i = self.forward(x_i)
         loss = self.shared_step(batch)
         self.log('train_loss', loss, sync_dist=True)
@@ -112,7 +110,7 @@ class CLOA(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        (x_i, _), fine_label, _ = batch
+        (x_i, _), fine_label = batch
         z_i = self.forward(x_i)
         k = 100
 
