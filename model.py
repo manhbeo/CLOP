@@ -119,6 +119,7 @@ class CLOA(pl.LightningModule):
         self._update_feature_bank(z_i, fine_label)
         return loss
 
+#TODO: add embedding variance here
     def validation_step(self, batch, batch_idx):
         (x_i, _), fine_label = batch
         z_i = self.forward(x_i)
@@ -128,6 +129,11 @@ class CLOA(pl.LightningModule):
         correct = (pred_labels == fine_label).sum().item()
         knn_acc = correct / x_i.size(0)
         self.log(f'val_acc', knn_acc, batch_size=x_i.size(0), sync_dist=True)
+
+        # Calculate embedding variance
+        embedding_mean = z_i.mean(dim=0)
+        embedding_variance = ((z_i - embedding_mean) ** 2).mean().item()
+        self.log('embedding_variance', embedding_variance, batch_size=z_i.size(0), sync_dist=True)
 
         loss = self.shared_step(batch)
         self.log('val_loss', loss, sync_dist=True)
