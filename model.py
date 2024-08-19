@@ -164,7 +164,7 @@ class CLOA(pl.LightningModule):
         elif self.lr_schedule == "linear":
             self.scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, total_iters=500)
         elif self.lr_schedule == "exp":
-            self.scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
+            self.scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
         scheduler_config = {
             "scheduler": self.scheduler,
