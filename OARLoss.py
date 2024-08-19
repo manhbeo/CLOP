@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.distributed as dist
 
+# fix this
 class OARLoss(nn.Module):
     """
     Orthogonal Anchor Regression Loss with SVD-initialized anchors. Add this to a (main) loss function

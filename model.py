@@ -106,9 +106,9 @@ class CLOA(pl.LightningModule):
         z_i = self.forward(x_i)
         z_j = self.forward(x_j)
 
-        loss = self.criterion(z_i, z_j, fine_label)
+        loss = self.criterion(z_i, z_j)
         if self.OAR != None: 
-            loss += self.OAR(z_i, z_j, fine_label)
+            loss += self.OAR(z_i, fine_label)
         return loss
 
     def training_step(self, batch, batch_idx):
