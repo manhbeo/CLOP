@@ -49,16 +49,20 @@ class CLOA(pl.LightningModule):
         if criterion == "nxt_ent":
             self.criterion = NTXentLoss(temperature=0.1, gather_distributed=True)
             self.projection_head = SimCLRProjectionHead(output_dim=128)
+            self.output_dim = 128
         elif criterion == "barlow":
             self.criterion = BarlowTwinsLoss(lambda_param=5e-3, gather_distributed=True)
             self.projection_head = BarlowTwinsProjectionHead(output_dim = 8192)
+            self.output_dim = 8192
             # batch_size = 256
         elif criterion == "vicreg":
             self.criterion = VICRegLoss(gather_distributed=True)
             self.projection_head = VICRegProjectionHead(output_dim = 8192)
+            self.output_dim = 8192
         elif criterion == "dcl":
             self.criterion = DCLLoss(gather_distributed=True)
             self.projection_head = SimCLRProjectionHead(output_dim=128)
+            self.output_dim = 128
             # batch_size = 256
         if OAR == True:
             self.criterion += OARLoss(self.num_classes)
@@ -74,7 +78,7 @@ class CLOA(pl.LightningModule):
     def _init_feature_bank(self, feature_bank_size):
         # Initialize feature bank and labels
         self.feature_bank_size = feature_bank_size
-        self.register_buffer("feature_bank", torch.randn(feature_bank_size, 128))
+        self.register_buffer("feature_bank", torch.randn(feature_bank_size, self.output_dim))
         self.register_buffer("feature_labels", torch.randint(0, 100, (feature_bank_size,)))
         self.feature_bank_ptr = 0
 
