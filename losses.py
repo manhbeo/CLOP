@@ -106,7 +106,7 @@ class DCLLoss(nn.Module):
         super().__init__()
         self.temperature = temperature
         self.weight_fn = weight_fn
-        self.gather_distributed = gather_distributed
+        self.gather_distributed = gather_distributed and dist.world_size() > 1
 
     def forward(self, features: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
         if self.gather_distributed and dist.is_initialized():
@@ -157,7 +157,7 @@ class VICRegLoss(nn.Module):
         self.lambda_param = lambda_param
         self.mu_param = mu_param
         self.nu_param = nu_param
-        self.gather_distributed = gather_distributed
+        self.gather_distributed = gather_distributed and dist.world_size() > 1
         self.eps = eps
 
     def forward(self, z_a, z_b):
