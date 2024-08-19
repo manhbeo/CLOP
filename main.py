@@ -49,7 +49,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, criterion):
     if criterion == "nxt_ent" or criterion == "dcl": 
         feature_dim = 128
     elif criterion == "barlow" or criterion == "vicreg": 
-        feature_dim = 4096
+        feature_dim = 8192
 
     linear_classifier = LinearClassifier(
         model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True,
@@ -98,7 +98,7 @@ def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset, crit
     if criterion == "nxt_ent" or criterion == "dcl": 
         feature_dim = 128
     elif criterion == "barlow" or criterion == "vicreg": 
-        feature_dim = 4096
+        feature_dim = 8192
     linear_classifier = LinearClassifier(
         model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True,
     )
