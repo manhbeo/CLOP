@@ -2,7 +2,10 @@ from lightly.models.modules.heads import SimCLRProjectionHead, BarlowTwinsProjec
 from torchvision import models
 import torch.nn as nn
 from OARLoss import OARLoss
-from losses import BarlowTwinsLoss, DCLLoss, VICRegLoss, NTXentLoss
+from lightly.loss.barlow_twins_loss import BarlowTwinsLoss
+from lightly.loss.dcl_loss import DCLLoss
+from lightly.loss.vicreg_loss import VICRegLoss
+from lightly.loss.ntx_ent_loss import NTXentLoss
 import pytorch_lightning as pl
 import torch
 from knn_predict import knn_predict
@@ -64,8 +67,9 @@ class CLOA(pl.LightningModule):
             self.projection_head = SimCLRProjectionHead(output_dim=128)
             self.output_dim = 128
             # batch_size = 256
+        self.OAR = None
         if OAR == True:
-            self.criterion += OARLoss(self.num_classes)
+            self.OAR = OARLoss(self.num_classes)
 
         # self.batch_size = batch_size
         self.optimizer = optimizer
@@ -103,6 +107,8 @@ class CLOA(pl.LightningModule):
         z_j = self.forward(x_j)
 
         loss = self.criterion(z_i, z_j, fine_label)
+        if self.OAR != None: 
+            loss += self.OAR(z_i, z_j, fine_label)
         return loss
 
     def training_step(self, batch, batch_idx):
