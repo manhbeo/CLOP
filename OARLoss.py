@@ -2,10 +2,9 @@ import torch
 import torch.nn as nn
 import torch.distributed as dist
 
-# fix this
 class OARLoss(nn.Module):
     """
-    Orthogonal Anchor Regression Loss with SVD-initialized anchors. Add this to a (main) loss function
+    Orthogonal Anchor Regression Loss with SVD-initialized anchors. Add this to a (main) loss function.
     """
     def __init__(self, num_classes: int = 100, embedding_dim: int = 128):
         """
@@ -19,7 +18,7 @@ class OARLoss(nn.Module):
         
         # Initialize anchors using SVD to ensure they are orthogonal
         random_matrix = torch.randn(num_classes, embedding_dim)
-        _, _, v = torch.svd(random_matrix)
+        _, _, v = torch.linalg.svd(random_matrix, full_matrices=False)
         self.anchors = nn.Parameter(v[:num_classes], requires_grad=False)  # Use the right singular vectors
         
         # Broadcast anchors to ensure all processes have the same anchors
@@ -41,14 +40,13 @@ class OARLoss(nn.Module):
         embeddings_norm = nn.functional.normalize(embeddings, p=2, dim=1)
         
         # Gather the corresponding anchors for each embedding in the batch
-        anchors_selected = self.anchors[labels]
+        anchors_selected = self.anchors[labels]  # Shape: (batch_size, embedding_dim)
         
-        # Compute cosine similarity
+        # Compute cosine similarity between embeddings and their corresponding anchors
         cosine_similarity = torch.sum(embeddings_norm * anchors_selected, dim=1)
         
         # Compute the loss as the mean of (1 - cosine similarity)
-        loss = 1 - cosine_similarity
-        loss = torch.mean(loss)
+        loss = torch.mean(1 - cosine_similarity)
         
         # Use distributed reduce to average the loss across all processes
         if dist.is_initialized():

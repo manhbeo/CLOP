@@ -69,7 +69,7 @@ class CLOA(pl.LightningModule):
             # batch_size = 256
         self.OAR = None
         if OAR == True:
-            self.OAR = OARLoss(self.num_classes)
+            self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim)
 
         # self.batch_size = batch_size
         self.optimizer = optimizer
@@ -107,6 +107,7 @@ class CLOA(pl.LightningModule):
         z_j = self.forward(x_j)
 
         loss = self.criterion(z_i, z_j)
+        print(z_i.shape)
         if self.OAR != None: 
             loss += self.OAR(z_i, fine_label)
         return loss
