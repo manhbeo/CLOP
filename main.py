@@ -21,7 +21,7 @@ def train(learning_rate, optimizer, lr_schedule, epochs, batch_size, dataset, pr
         monitor='val_loss',
         mode="min",
         dirpath='',
-        filename='model-{epoch:04d}-{val_acc:.2f}',
+        filename='128-{epoch:04d}-{val_acc:.2f}',
         save_weights_only=True,
         every_n_epochs=3,
         verbose=True
