@@ -80,11 +80,16 @@ class CIFARDataModule(pl.LightningDataModule):
             train_dataset, [train_size, val_size], generator=torch.Generator().manual_seed(42)
         )
 
+        self.cifar_test = CustomCIFARDataset(self.data_dir, self.dataset, train=False, transform=self.test_transform)
+
     def train_dataloader(self):
         return DataLoader(self.cifar_train, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=95)
 
     def val_dataloader(self):
         return DataLoader(self.cifar_val, batch_size=self.batch_size, drop_last=True, num_workers=95)
+    
+    def test_dataloader(self):
+        return DataLoader(self.cifar_test, batch_size=self.batch_size, drop_last=True, num_workers=95)
 
 
 class CIFAREvaluationDataModule(pl.LightningDataModule):
