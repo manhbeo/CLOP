@@ -6,7 +6,7 @@ class OARLoss(nn.Module):
     """
     Orthogonal Anchor Regression Loss with SVD-initialized anchors. Add this to a (main) loss function
     """
-    def __init__(self, num_classes: int = 100, embedding_dim: int = 128):
+    def __init__(self, num_classes: int = 100, embedding_dim: int = 128, lambda_value: int = 0.5):
         """
         Args:
             num_classes (int): Number of classes, and thus the number of anchors.
@@ -15,6 +15,7 @@ class OARLoss(nn.Module):
         super(OARLoss, self).__init__()
         self.num_classes = num_classes
         self.embedding_dim = embedding_dim
+        self.lambda_value = lambda_value
         
         # Initialize anchors using SVD to ensure they are orthogonal
         random_matrix = torch.randn(num_classes, embedding_dim)
@@ -47,6 +48,7 @@ class OARLoss(nn.Module):
         
         # Compute the loss as the mean of (1 - cosine similarity)
         loss = torch.mean(1 - cosine_similarity)
+        loss *= self.lambda_value
         
         # Use distributed reduce to average the loss across all processes
         if dist.is_initialized():
