@@ -79,7 +79,7 @@ class CLOA(pl.LightningModule):
         # Initialize feature bank and labels
         self.feature_bank_size = feature_bank_size
         self.register_buffer("feature_bank", torch.randn(feature_bank_size, self.output_dim))
-        self.register_buffer("feature_labels", torch.randint(0, 100, (feature_bank_size,)))
+        self.register_buffer("feature_labels", torch.randint(0, self.num_classes, (feature_bank_size,)))
         self.feature_bank_ptr = 0
 
     def _update_feature_bank(self, features, labels):
