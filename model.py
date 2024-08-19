@@ -166,7 +166,7 @@ class CLOA(pl.LightningModule):
             optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
 
         if self.lr_schedule == "cosine":    
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=500)
+            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=1000)
         elif self.lr_schedule == "linear":
             self.scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, total_iters=500)
         elif self.lr_schedule == "exp":
