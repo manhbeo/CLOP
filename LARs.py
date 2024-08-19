@@ -7,7 +7,7 @@ https://github.com/google-research/simclr/blob/master/lars_optimizer.py
 
 import torch
 from torch.optim.optimizer import Optimizer, required
-import re
+import re   
 
 EETA_DEFAULT = 0.001
 
