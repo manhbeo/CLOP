@@ -1,7 +1,6 @@
 from model import CLOA
-from data_module import CIFARDataModule, CIFAREvaluationDataModule#, ImageNetDataModule, ImageNetEvaluationDataModule
+from data_module import CIFARDataModule, CIFAREvaluationDataModule
 from pytorch_lightning.callbacks import ModelCheckpoint
-import wandb
 import pytorch_lightning as pl
 import argparse
 from pytorch_lightning import seed_everything
