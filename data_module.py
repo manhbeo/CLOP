@@ -62,7 +62,7 @@ class CIFARDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None, fraction=1.0):
         # Assign train/val datasets for use in dataloaders
-        cifar_full = CustomCIFARDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform, download=True)
+        cifar_full = CustomCIFARDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
 
         train_size = int(len(cifar_full) * fraction)
         train_indices = torch.randperm(len(cifar_full))[:train_size]
@@ -104,7 +104,7 @@ class CIFAREvaluationDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         # Split dataset into train, val, and test
         if stage == 'fit' or stage is None:
-            cifar_full = CustomCIFARDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform, download=True)
+            cifar_full = CustomCIFARDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
 
             train_size = int((1 - self.val_split) * len(cifar_full))
             val_size = len(cifar_full) - train_size
@@ -113,7 +113,7 @@ class CIFAREvaluationDataModule(pl.LightningDataModule):
             )
 
         if stage == 'test' or stage is None:
-            self.cifar_test = CustomCIFARDataset(self.data_dir, self.dataset, train=False, transform=self.train_transform, download=True)
+            self.cifar_test = CustomCIFARDataset(self.data_dir, self.dataset, train=False, transform=self.train_transform)
 
 
     def train_dataloader(self):
