@@ -49,51 +49,43 @@ class NTXentLoss(nn.Module):
         return sup_contrastive_loss
 
 
+import torch.distributed as dist
 
 class BarlowTwinsLoss(nn.Module):
     def __init__(self, lambda_param: float = 5e-3, gather_distributed: bool = False):
         super(BarlowTwinsLoss, self).__init__()
         self.lambda_param = lambda_param
-        self.use_distributed = gather_distributed and dist.world_size() > 1
+        self.use_distributed = gather_distributed and dist.is_initialized() and dist.get_world_size() > 1
         self.epsilon = 1e-10  # Small epsilon term for numerical stability
 
-    def off_diagonal(self, x):
-        # Returns the off-diagonal elements of a square matrix
-        n, m = x.shape
-        assert n == m
-        return x.flatten()[:-1].view(n - 1, n + 1)[:, 1:].flatten()
-
-    def forward(self, z_a, z_b, labels):
-        # Normalize the representations with epsilon for numerical stability
-        z_a = (z_a - z_a.mean(0)) / (z_a.std(0) + self.epsilon)
-        z_b = (z_b - z_b.mean(0)) / (z_b.std(0) + self.epsilon)
+    def forward(self, z1: torch.Tensor, z2: torch.Tensor, target: torch.Tensor = None) -> torch.Tensor:
+        """
+        z1, z2: Batch of embeddings from two views of the same input (B, D)
+        target: Optional, can be used for supervised loss. Should be the same shape as (B,)
+        """
+        # Normalize the representations along the batch dimension
+        z1_norm = (z1 - z1.mean(0)) / (z1.std(0) + self.epsilon)
+        z2_norm = (z2 - z2.mean(0)) / (z2.std(0) + self.epsilon)
         
-        # Gather the representations from all distributed processes if enabled
-        if self.use_distributed:
-            z_a = self.gather_from_all(z_a)
-            z_b = self.gather_from_all(z_b)
-            labels = self.gather_from_all(labels)
-
         # Compute the cross-correlation matrix
-        c = torch.mm(z_a.T, z_b) / z_a.size(0)
+        c = torch.matmul(z1_norm.T, z2_norm) / z1.size(0)
+        
+        if self.use_distributed:
+            dist.all_reduce(c)
 
-        # Apply the supervised component: Only consider same-label pairs
-        label_mask = labels.unsqueeze(1) == labels.unsqueeze(0)
-        c = c * label_mask.float()
-
+        # Get the identity matrix
+        identity = torch.eye(c.size(0), device=c.device)
+        
         # Compute the loss
-        on_diag = torch.diagonal(c).add_(-1).pow(2).sum()
-        off_diag = self.off_diagonal(c).pow(2).sum()
-        loss = on_diag + self.lambda_param * off_diag
+        barlow_loss = (c - identity).pow(2).sum() / c.size(0)
+
+        # Supervised component: Assuming binary classification for simplicity
+        if target is not None:
+            target_loss = nn.BCEWithLogitsLoss()(z1, target) + nn.BCEWithLogitsLoss()(z2, target)
+            loss = barlow_loss + self.lambda_param * target_loss
+        else:
+            loss = barlow_loss
         return loss
-
-    def gather_from_all(self, tensor):
-        # Gather tensor from all processes
-        gathered_tensors = [torch.zeros_like(tensor) for _ in range(dist.world_size())]
-        dist.all_gather(gathered_tensors, tensor)
-        gathered_tensors = torch.cat(gathered_tensors, dim=0)
-        return gathered_tensors
-
 
 
 class DCLLoss(nn.Module):
