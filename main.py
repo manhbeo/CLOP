@@ -8,7 +8,6 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch
 
-#TODO: start with adamw
 def sweep(args):
     def sweep_train():
       wandb.init()
@@ -182,7 +181,7 @@ if __name__ == '__main__':
 
     if args.sweep:
         sweep_train_config = {
-            'method': 'random',
+            'method': 'grid',
             'metric': {
                 'name': 'val_acc',
                 'goal': 'maximize'
