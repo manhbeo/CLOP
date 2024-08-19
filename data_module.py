@@ -29,6 +29,9 @@ class CustomCIFARDataset(Dataset):
         if self.transform is not None:
             img1 = self.transform(img)
             img2 = self.transform(img)
+        else:
+            img1 = img
+            img2 = img
 
         return (img1, img2), fine_label
 
@@ -42,6 +45,7 @@ class CIFARDataModule(pl.LightningDataModule):
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.dataset = dataset
+        self.normalize = None
 
         # Set the correct normalization for the chosen dataset
         if self.dataset == "cifar100":
