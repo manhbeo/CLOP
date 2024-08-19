@@ -54,7 +54,7 @@ class BarlowTwinsLoss(nn.Module):
     def __init__(self, lambda_param: float = 5e-3, gather_distributed: bool = False):
         super(BarlowTwinsLoss, self).__init__()
         self.lambda_param = lambda_param
-        self.use_distributed = gather_distributed and dist.get_world_size() > 1
+        self.use_distributed = gather_distributed and dist.world_size() > 1
         self.epsilon = 1e-10  # Small epsilon term for numerical stability
 
     def off_diagonal(self, x):
@@ -89,7 +89,7 @@ class BarlowTwinsLoss(nn.Module):
 
     def gather_from_all(self, tensor):
         # Gather tensor from all processes
-        gathered_tensors = [torch.zeros_like(tensor) for _ in range(dist.get_world_size())]
+        gathered_tensors = [torch.zeros_like(tensor) for _ in range(dist.world_size())]
         dist.all_gather(gathered_tensors, tensor)
         gathered_tensors = torch.cat(gathered_tensors, dim=0)
         return gathered_tensors
@@ -111,8 +111,8 @@ class DCLLoss(nn.Module):
     def forward(self, features: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
         if self.gather_distributed and dist.is_initialized():
             # Gather features and labels from all processes
-            features_gathered = [torch.zeros_like(features) for _ in range(dist.get_world_size())]
-            labels_gathered = [torch.zeros_like(labels) for _ in range(dist.get_world_size())]
+            features_gathered = [torch.zeros_like(features) for _ in range(dist.world_size())]
+            labels_gathered = [torch.zeros_like(labels) for _ in range(dist.world_size())]
             
             dist.all_gather(features_gathered, features)
             dist.all_gather(labels_gathered, labels)
@@ -202,7 +202,7 @@ class VICRegLoss(nn.Module):
         return off_diag_elements
 
     def gather_embeddings(self, embeddings):
-        gathered_embeddings = [torch.zeros_like(embeddings) for _ in range(dist.get_world_size())]
+        gathered_embeddings = [torch.zeros_like(embeddings) for _ in range(dist.world_size())]
         dist.all_gather(gathered_embeddings, embeddings)
         gathered_embeddings = torch.cat(gathered_embeddings, dim=0)
         return gathered_embeddings
