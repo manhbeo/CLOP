@@ -27,11 +27,13 @@ def sweep(args):
 
       checkpoint_callback = ModelCheckpoint(
           monitor='val_loss',
-          dirpath="",
-          filename='loss:{val_loss:.5f}',
-          save_top_k=1,
-          mode='min',
-          every_n_epochs=10)
+          mode="min",
+          dirpath='',
+          filename='model-{epoch:04d}-{val_acc:.2f}',
+          save_weights_only=True,
+          every_n_epochs=3,
+          verbose=True
+      )
 
       trainer = pl.Trainer(logger=wandb_logger,
                     devices="auto",
