@@ -65,6 +65,11 @@ class CIFARDataModule(pl.LightningDataModule):
             self.normalize
         ])
 
+        self.test_transform = transforms.Compose([
+            transforms.ToTensor(),
+            self.normalize
+        ])
+
     def setup(self, stage=None, fraction=1.0):
         # Assign train/val datasets for use in dataloaders
         cifar_full = CustomCIFARDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
