@@ -90,7 +90,7 @@ class BarlowTwinsLoss(nn.Module):
     def gather_from_all(self, tensor):
         # Gather tensor from all processes
         gathered_tensors = [torch.zeros_like(tensor) for _ in range(dist.world_size())]
-        dist.all_gather(gathered_tensors, tensor)
+        dist.gather(gathered_tensors, tensor)
         gathered_tensors = torch.cat(gathered_tensors, dim=0)
         return gathered_tensors
 
