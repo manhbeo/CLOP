@@ -35,7 +35,7 @@ class ResNet50_ImgNet(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, learning_rate=6.5, lr_schedule="exp", optimizer="lars", criterion="nxt_ent", batch_size=4096, dataset="cifar100", OAR=True):
+    def __init__(self, learning_rate=6.5, lr_schedule="exp", optimizer="lars", criterion="nxt_ent", batch_size=4096, dataset="cifar100", OAR=True, OAR_only=True):
         super(CLOA, self).__init__()
 
         self.num_classes = 0
@@ -67,7 +67,11 @@ class CLOA(pl.LightningModule):
             self.output_dim = 128
             # batch_size = 256
         self.OAR = None
-        if OAR == True:
+        if OAR_only: 
+            self.criterion = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=0.5)
+            self.projection_head = SimCLRProjectionHead(output_dim=128)
+            self.output_dim = 128
+        elif OAR:
             self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=0.5)
 
         # self.batch_size = batch_size
