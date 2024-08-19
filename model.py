@@ -68,7 +68,7 @@ class CLOA(pl.LightningModule):
             # batch_size = 256
         self.OAR = None
         if OAR == True:
-            self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=1.0)
+            self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=0.5)
 
         # self.batch_size = batch_size
         self.optimizer = optimizer
