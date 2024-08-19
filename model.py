@@ -107,7 +107,6 @@ class CLOA(pl.LightningModule):
         z_j = self.forward(x_j)
 
         loss = self.criterion(z_i, z_j)
-        print(z_i.shape)
         if self.OAR != None: 
             loss += self.OAR(z_i, fine_label)
         return loss
