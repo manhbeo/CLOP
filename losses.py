@@ -3,7 +3,6 @@ import torch.nn as nn
 from lightly.utils import dist
 import torch.nn.functional as F
 from typing import Callable, Optional
-from torch import Tensor
 
 class NTXentLoss(nn.Module):
     def __init__(self, temperature: float = 0.5, gather_distributed: bool = False):
