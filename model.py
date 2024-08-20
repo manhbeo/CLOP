@@ -50,7 +50,9 @@ class CLOA(pl.LightningModule):
             self.encoder = ResNet50_ImgNet()
 
         if criterion == "nxt_ent":
-            self.criterion = NTXentLoss(temperature=0.1, gather_distributed=True)
+            if dataset == "cifar100": temperature = 0.5
+            else: temperature = 0.1
+            self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
             self.projection_head = SimCLRProjectionHead(output_dim=128)
             self.output_dim = 128
         elif criterion == "barlow":
