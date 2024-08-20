@@ -79,7 +79,7 @@ class CLOA(pl.LightningModule):
 
         # self.batch_size = batch_size
         self.optimizer = optimizer
-        self.learning_rate = 0.3 * math.sqrt(batch_size)
+        self.learning_rate = 0.075 * math.sqrt(batch_size)
         # self.learning_rate = learning_rate
         self.lr_schedule = lr_schedule
         self.feature_bank_size = batch_size
