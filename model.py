@@ -10,6 +10,7 @@ import pytorch_lightning as pl
 import torch
 from knn_predict import knn_predict
 from LARs import LARS
+import math
 
 class ResNet50_CIFAR(nn.Module):
     def __init__(self):
@@ -76,7 +77,7 @@ class CLOA(pl.LightningModule):
 
         # self.batch_size = batch_size
         self.optimizer = optimizer
-        self.learning_rate = 0.3 * batch_size / 256
+        self.learning_rate = 0.3 * math.sqrt(batch_size)
         # self.learning_rate = learning_rate
         self.lr_schedule = lr_schedule
         self.feature_bank_size = batch_size
