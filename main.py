@@ -18,6 +18,7 @@ def train(learning_rate, optimizer, lr_schedule, epochs, batch_size, dataset, pr
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train")
 
     #Save the model after each 5 epochs
+    #next use iNaturalist
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
         mode="min",

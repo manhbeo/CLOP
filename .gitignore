@@ -2,7 +2,6 @@ paper_with_review.pdf
 run.sh
 data
 test.ipynb
-losses.py
 wandb
 .cache
 weights

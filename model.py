@@ -6,6 +6,7 @@ from lightly.loss.barlow_twins_loss import BarlowTwinsLoss
 from lightly.loss.dcl_loss import DCLLoss
 from lightly.loss.vicreg_loss import VICRegLoss
 from lightly.loss.ntx_ent_loss import NTXentLoss
+from losses import Supervised_NTXentLoss
 import pytorch_lightning as pl
 import torch
 from knn_predict import knn_predict
@@ -69,6 +70,12 @@ class CLOA(pl.LightningModule):
             self.projection_head = SimCLRProjectionHead(output_dim=128)
             self.output_dim = 128
             # batch_size = 256
+        elif criterion == "supervised_nxt_ent":
+            if dataset == "cifar100": temperature = 0.5
+            else: temperature = 0.1
+            self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
+            self.projection_head = SimCLRProjectionHead(output_dim=128)
+            self.output_dim = 128
         self.OAR = None
         if OAR_only: 
             self.criterion = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=0.5)
