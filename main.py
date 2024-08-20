@@ -22,9 +22,9 @@ def train(learning_rate, optimizer, lr_schedule, epochs, batch_size, dataset, pr
         monitor='val_loss',
         mode="min",
         dirpath='',
-        filename='128-{epoch:04d}-{val_acc:.2f}',
+        filename='nxt_ent-{epoch:04d}-{val_acc:.2f}',
         save_weights_only=True,
-        every_n_epochs=3,
+        every_n_epochs=2,
         verbose=True
     )
 
