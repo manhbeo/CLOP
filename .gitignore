@@ -3,3 +3,5 @@ run.sh
 data
 test.ipynb
 losses.py
+wandb
+.cache
