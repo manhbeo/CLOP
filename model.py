@@ -50,6 +50,7 @@ class CLOA(pl.LightningModule):
         elif dataset == "imagenet":
             self.encoder = ResNet50_ImgNet()
 
+        self.supervised = False
         if criterion == "nxt_ent":
             if dataset == "cifar100": temperature = 0.5
             else: temperature = 0.1
@@ -76,6 +77,7 @@ class CLOA(pl.LightningModule):
             self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
             self.projection_head = SimCLRProjectionHead(output_dim=128)
             self.output_dim = 128
+            self.supervised = True
         self.OAR = None
         if OAR_only: 
             self.criterion = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=0.5)
@@ -119,7 +121,10 @@ class CLOA(pl.LightningModule):
         z_i = self.forward(x_i)
         z_j = self.forward(x_j)
 
-        loss = self.criterion(z_i, z_j)
+        if self.supervised: 
+            loss = self.criterion(z_i, z_j, fine_label)
+        else:    
+            loss = self.criterion(z_i, z_j)
         if self.OAR != None: 
             loss += self.OAR(z_i, fine_label)
         return loss
