@@ -79,10 +79,12 @@ class CLOA(pl.LightningModule):
             self.output_dim = 128
             self.supervised = True
         self.OAR = None
+        self.OAR_only = False
         if OAR_only: 
             self.criterion = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=0.5)
             self.projection_head = SimCLRProjectionHead(output_dim=128)
             self.output_dim = 128
+            self.OAR_only = OAR_only
         elif OAR:
             self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=0.5)
 
@@ -123,6 +125,8 @@ class CLOA(pl.LightningModule):
 
         if self.supervised: 
             loss = self.criterion(z_i, z_j, fine_label)
+        elif self.OAR_only:
+            loss = self.criterion(z_i, fine_label)
         else:    
             loss = self.criterion(z_i, z_j)
         if self.OAR != None: 
