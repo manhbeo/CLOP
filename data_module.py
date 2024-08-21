@@ -124,7 +124,7 @@ class CustomDataModule(pl.LightningDataModule):
             train_dataset = Subset(full_dataset, train_indices)
 
             val_size = int(train_size * 0.1)
-            train_size = int(train_size * 0.9)
+            train_size = train_size - val_size
 
             self.train_dataset, self.val_dataset = random_split(
                 train_dataset, [train_size, val_size], generator=torch.Generator()

@@ -120,8 +120,7 @@ class CLOA(pl.LightningModule):
             model += 'oar_'
         if self.supervised:
             model += 'supervised_'
-        model += 'model_'
-        self.log('model', model)
+        self.log('model', {'model': model})
 
     def training_step(self, batch, batch_idx):
         (x_i, _), fine_label = batch
