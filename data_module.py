@@ -5,7 +5,7 @@ import pickle
 import pytorch_lightning as pl
 import torch
 
-#TODO: do iNaturalist and ImgNet
+#TODO: consider iNaturalist
 class CustomDataset(Dataset):
     def __init__(self, root, dataset, train=True, transform=None):
         self.transform = transform
