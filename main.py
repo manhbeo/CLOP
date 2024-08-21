@@ -6,7 +6,6 @@ import argparse
 from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch
-from lightly.utils import dist
 
 def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, criterion="nxt_ent", OAR_only=False):
     if pretrain_dir != None: #if pretrain_dir exist
