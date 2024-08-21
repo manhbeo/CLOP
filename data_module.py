@@ -5,21 +5,14 @@ import pickle
 import pytorch_lightning as pl
 import torch
 
-class CustomCIFARDataset(Dataset):
-    def __init__(self, root, dataset, train=True, transform=None):
+class CustomCIFAR100Dataset(Dataset):
+    def __init__(self, root, train=True, transform=None):
         self.transform = transform
-        if dataset == "cifar100":
-            self.dataset = datasets.CIFAR100(root=root, train=train, download=True)
-            file_path = os.path.join(root, 'cifar-100-python', 'train' if train else 'test')
-            with open(file_path, 'rb') as f:
-                self.data = pickle.load(f, encoding='latin1')
-            self.fine_labels = self.data['fine_labels']
-        if dataset == "cifar10":
-            self.dataset = datasets.CIFAR10(root=root, train=train, download=True)
-            file_path = os.path.join(root, 'cifar-10-batches-py', 'data_batch_1' if train else 'test_batch')
-            with open(file_path, 'rb') as f:
-                self.data = pickle.load(f, encoding='latin1')
-            self.fine_labels = self.data['labels']
+        self.dataset = datasets.CIFAR100(root=root, train=train, download=True)
+        file_path = os.path.join(root, 'cifar-100-python', 'train' if train else 'test')
+        with open(file_path, 'rb') as f:
+            self.data = pickle.load(f, encoding='latin1')
+        self.fine_labels = self.data['fine_labels']
 
     def __getitem__(self, index):
         # Get an image and its fine label
@@ -50,8 +43,7 @@ class CIFARDataModule(pl.LightningDataModule):
         # Set the correct normalization for the chosen dataset
         if self.dataset == "cifar100":
             self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
-        elif self.dataset == "cifar10":
-            self.normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2470, 0.2435, 0.2616])
+        
 
         self.train_transform = transforms.Compose([
             transforms.RandomResizedCrop(32, scale=(0.2, 1.0)),
@@ -72,7 +64,7 @@ class CIFARDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None, fraction=1.0):
         # Assign train/val datasets for use in dataloaders
-        cifar_full = CustomCIFARDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
+        cifar_full = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
 
         train_size = int(len(cifar_full) * fraction)
         train_indices = torch.randperm(len(cifar_full))[:train_size]
@@ -85,7 +77,7 @@ class CIFARDataModule(pl.LightningDataModule):
             train_dataset, [train_size, val_size], generator=torch.Generator().manual_seed(42)
         )
 
-        self.cifar_test = CustomCIFARDataset(self.data_dir, self.dataset, train=False, transform=self.test_transform)
+        self.cifar_test = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.test_transform)
 
     def train_dataloader(self):
         return DataLoader(self.cifar_train, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=16)
@@ -108,8 +100,7 @@ class CIFAREvaluationDataModule(pl.LightningDataModule):
         # Set the correct normalization for the chosen dataset
         if self.dataset == "cifar100":
             self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
-        elif self.dataset == "cifar10":
-            self.normalize = transforms.Normalize(mean=[0.4914, 0.4822, 0.4465], std=[0.2470, 0.2435, 0.2616])
+        
 
         self.transform = transforms.Compose([
             transforms.ToTensor(),
@@ -119,7 +110,7 @@ class CIFAREvaluationDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         # Split dataset into train, val, and test
         if stage == 'fit' or stage is None:
-            cifar_full = CustomCIFARDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
+            cifar_full = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
 
             train_size = int((1 - self.val_split) * len(cifar_full))
             val_size = len(cifar_full) - train_size
@@ -128,7 +119,7 @@ class CIFAREvaluationDataModule(pl.LightningDataModule):
             )
 
         if stage == 'test' or stage is None:
-            self.cifar_test = CustomCIFARDataset(self.data_dir, self.dataset, train=False, transform=self.train_transform)
+            self.cifar_test = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.train_transform)
 
 
     def train_dataloader(self):
