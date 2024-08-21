@@ -83,24 +83,35 @@ class CustomDataModule(pl.LightningDataModule):
         self.normalize = None
 
         # Set the correct normalization for the chosen dataset
-        if self.dataset == "cifar100":
+        if self.dataset == "cifar10":
             self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
             crop_size = 32
+            self.train_transform = transforms.Compose([
+                transforms.RandomResizedCrop(crop_size, scale=(0.2, 1.0)),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomApply([
+                    transforms.ColorJitter(0.5, 0.5, 0.5, 0.1)
+                ], p=0.8),
+                transforms.RandomGrayscale(p=0.2),
+                transforms.ToTensor(),
+                self.normalize
+            ])
         elif self.dataset == "imagenet":
             self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             crop_size = 224
+            self.train_transform = transforms.Compose([
+                transforms.RandomResizedCrop(crop_size, scale=(0.2, 1.0)),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomApply([
+                    transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
+                ], p=0.8),
+                transforms.RandomGrayscale(p=0.2),
+                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(32 * 0.1), sigma=(0.1, 2.0))], p=0.5),
+                transforms.ToTensor(),
+                self.normalize
+            ])
 
-        self.train_transform = transforms.Compose([
-            transforms.RandomResizedCrop(crop_size, scale=(0.2, 1.0)),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomApply([
-                transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
-            ], p=0.8),
-            transforms.RandomGrayscale(p=0.2),
-            transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(32 * 0.1), sigma=(0.1, 2.0))], p=0.5),
-            transforms.ToTensor(),
-            self.normalize
-        ])
+        
 
         self.test_transform = transforms.Compose([
             transforms.Resize(32 if self.dataset == "cifar100" else 256),
@@ -128,7 +139,7 @@ class CustomDataModule(pl.LightningDataModule):
                 train_dataset, [train_size, val_size], generator=torch.Generator()
             )
         if stage == 'test' or stage is None:
-            if self.dataset == "cifar100":
+            if self.dataset == "cifar10":
                 self.test_dataset = CustomCIFARDataset(self.data_dir, self.dataset, train=False, transform=self.test_transform)
             elif self.dataset == "imagenet":
                 self.test_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.test_transform)
