@@ -118,7 +118,7 @@ if __name__ == '__main__':
     parser.add_argument("--pretrain_model", type=str)
     parser.add_argument("--pretrain_linear_classifier_dir", type=str)
     parser.add_argument("--batch_size", type=int, default=256)
-    parser.add_argument("--dataset", type=str, default="cifar100")
+    parser.add_argument("--dataset", type=str, default="cifar10")
     parser.add_argument("--OAR", action='store_true')
     parser.add_argument("--OAR_only", action='store_true')
     parser.add_argument("--supervised", action='store_true')

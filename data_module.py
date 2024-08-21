@@ -9,6 +9,7 @@ import torch.distributed as dist
 #TODO: consider iNaturalist
 class CustomCIFARDataset(Dataset):
     def __init__(self, root, train=True, transform=None):
+        self.transform = transform
         self.dataset = datasets.CIFAR10(root=root, train=train, download=True)
         file_path = os.path.join(root, 'cifar-10-batches-py', 'data_batch_1' if train else 'test_batch')
         with open(file_path, 'rb') as f:
@@ -75,7 +76,7 @@ class CustomImageNetDataset(Dataset):
 
 
 class CustomDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100"):
+    def __init__(self, data_dir='data', batch_size=32, dataset="cifar10"):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -114,7 +115,7 @@ class CustomDataModule(pl.LightningDataModule):
         
 
         self.test_transform = transforms.Compose([
-            transforms.Resize(32 if self.dataset == "cifar100" else 256),
+            transforms.Resize(32 if self.dataset == "cifar10" else 256),
             transforms.CenterCrop(crop_size),
             transforms.ToTensor(),
             self.normalize
