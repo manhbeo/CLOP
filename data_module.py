@@ -86,9 +86,8 @@ class CustomDataModule(pl.LightningDataModule):
         # Set the correct normalization for the chosen dataset
         if self.dataset == "cifar10":
             self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
-            crop_size = 32
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(crop_size, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(32, scale=(0.2, 1.0)),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomApply([
                     transforms.ColorJitter(0.5, 0.5, 0.5, 0.1)
@@ -99,9 +98,8 @@ class CustomDataModule(pl.LightningDataModule):
             ])
         elif self.dataset == "imagenet":
             self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            crop_size = 224
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(crop_size, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomApply([
                     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
@@ -112,11 +110,9 @@ class CustomDataModule(pl.LightningDataModule):
                 self.normalize
             ])
 
-        
-
         self.test_transform = transforms.Compose([
             transforms.Resize(32 if self.dataset == "cifar10" else 256),
-            transforms.CenterCrop(crop_size),
+            transforms.CenterCrop(32 if self.dataset == "cifar10" else 224),
             transforms.ToTensor(),
             self.normalize
         ])
@@ -124,8 +120,8 @@ class CustomDataModule(pl.LightningDataModule):
     def setup(self, stage=None, fraction=1.0):
         # Assign train/val datasets for use in dataloaders
         if stage == 'fit' or stage is None:
-            if self.dataset == "cifar100":
-                full_dataset = CustomCIFARDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
+            if self.dataset == "cifar10":
+                full_dataset = CustomCIFARDataset(self.data_dir, train=True, transform=self.train_transform)
             elif self.dataset == "imagenet":
                 full_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
 
@@ -141,10 +137,9 @@ class CustomDataModule(pl.LightningDataModule):
             )
         if stage == 'test' or stage is None:
             if self.dataset == "cifar10":
-                self.test_dataset = CustomCIFARDataset(self.data_dir, self.dataset, train=False, transform=self.test_transform)
+                self.test_dataset = CustomCIFARDataset(self.data_dir, train=False, transform=self.test_transform)
             elif self.dataset == "imagenet":
                 self.test_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.test_transform)
-
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=16)
@@ -157,7 +152,7 @@ class CustomDataModule(pl.LightningDataModule):
 
 
 class CustomEvaluationDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='./data', batch_size=32, val_split=0.2, dataset="cifar100"):
+    def __init__(self, data_dir='./data', batch_size=32, val_split=0.2, dataset="cifar10"):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -165,16 +160,14 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
         self.val_split = val_split
 
         # Set the correct normalization for the chosen dataset
-        if self.dataset == "cifar100":
+        if self.dataset == "cifar10":
             self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
-            crop_size = 32
         elif self.dataset == "imagenet":
             self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            crop_size = 224
 
         self.transform = transforms.Compose([
-            transforms.Resize(32 if dataset == "cifar100" else 256),
-            transforms.CenterCrop(crop_size),
+            transforms.Resize(32 if dataset == "cifar10" else 256),
+            transforms.CenterCrop(32 if dataset == "cifar10" else 224),
             transforms.ToTensor(),
             self.normalize
         ])
@@ -182,8 +175,8 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         # Split dataset into train, val, and test
         if stage == 'fit' or stage is None:
-            if self.dataset == "cifar100":
-                full_dataset = CustomCIFARDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
+            if self.dataset == "cifar10":
+                full_dataset = CustomCIFARDataset(self.data_dir, train=True, transform=self.train_transform)
             elif self.dataset == "imagenet":
                 full_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
 
@@ -194,12 +187,10 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             )
 
         if stage == 'test' or stage is None:
-            if self.dataset == "cifar100":
-                self.test_dataset = CustomCIFARDataset(self.data_dir, self.dataset, train=False, transform=self.test_transform)
+            if self.dataset == "cifar10":
+                self.test_dataset = CustomCIFARDataset(self.data_dir, train=False, transform=self.test_transform)
             elif self.dataset == "imagenet":
                 self.test_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.test_transform)
-
-
 
     def train_dataloader(self):
         return DataLoader(self.cifar_train, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=8)
