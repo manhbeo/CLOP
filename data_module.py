@@ -75,7 +75,7 @@ class CIFARDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None, fraction=1.0):
         # Assign train/val datasets for use in dataloaders
-        cifar_full = CustomDataset(self.data_dir, train=True, transform=self.train_transform)
+        cifar_full = CustomDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
 
         train_size = int(len(cifar_full) * fraction)
         train_indices = torch.randperm(len(cifar_full))[:train_size]
