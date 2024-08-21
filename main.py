@@ -7,24 +7,24 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, criterion="nxt_ent", OAR_only=False):
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=False, supervised=False):
     if pretrain_dir != None: #if pretrain_dir exist
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOA(criterion, batch_size, dataset, OAR, OAR_only)
+        model = CLOA(batch_size, dataset, OAR, OAR_only, supervised)
     
     data_module = CIFARDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train")
 
-    #Save the model after each 5 epochs
+    #Save the model after each 1 epoch
     #next use iNaturalist
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
         mode="min",
         dirpath='',
-        filename='oar_nxt_ent-{epoch:04d}-{val_acc:.2f}',
+        filename='{model}-{epoch:04d}-{val_acc:.2f}',
         save_weights_only=True,
-        every_n_epochs=2,
+        every_n_epochs=1,
         verbose=True
     )
 
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     parser.add_argument("--dataset", type=str, default="cifar100")
     parser.add_argument("--OAR", action='store_true')
     parser.add_argument("--OAR_only", action='store_true')
-    parser.add_argument("--criterion", type=str, default="nxt_ent")
+    parser.add_argument("--supervised", action='store_true')
     args = parser.parse_args()
 
     if args.eval:
@@ -123,4 +123,4 @@ if __name__ == '__main__':
     elif args.test:
         test(args.pretrain_model, args.pretrain_linear_classifier_dir, args.batch_size, args.dataset)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR, args.criterion, args.OAR_only)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR, args.OAR_only, args.supervised)

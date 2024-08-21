@@ -23,9 +23,9 @@ class ResNet50_CIFAR(nn.Module):
     def forward(self, x):
         return self.resnet50(x)
 
-class ResNet50_ImgNet(nn.Module):
+class ResNet50(nn.Module):
     def __init__(self):
-        super(ResNet50_ImgNet, self).__init__()
+        super(ResNet50, self).__init__()
         self.resnet50 = models.resnet50(weights=None)
         self.resnet50.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
 
@@ -34,7 +34,7 @@ class ResNet50_ImgNet(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, criterion="nxt_ent", batch_size=128, dataset="cifar100", OAR=True, OAR_only=True):
+    def __init__(self, batch_size=128, dataset="cifar100", OAR=True, OAR_only=False, supervised=False):
         super(CLOA, self).__init__()
 
         self.num_classes = 0
@@ -44,15 +44,19 @@ class CLOA(pl.LightningModule):
             self.num_classes = 100
             self.output_dim = 128
             temperature = 0.5
+        elif dataset == "inaturalist":
+            self.encoder = ResNet50()
+            self.num_classes = 1000
         elif dataset == "imagenet":
-            self.encoder = ResNet50_ImgNet()
+            self.encoder = ResNet50()
 
-        self.supervised = False
-        if criterion == "nxt_ent":
+        self.supervised = supervised
+        self.OAR = None
+        self.OAR_only = False
+        if not self.supervised:
             self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
-        elif criterion == "supervised_nxt_ent":
+        elif self.supervised:
             self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
-            self.supervised = True
 
         if OAR_only: 
             self.criterion = OARLoss(self.num_classes, embedding_dim=self.output_dim)
@@ -61,8 +65,6 @@ class CLOA(pl.LightningModule):
             self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim)
 
         self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
-        self.OAR = None
-        self.OAR_only = False
 
         self.learning_rate = 0.075 * math.sqrt(batch_size)
         self.feature_bank_size = batch_size
@@ -91,7 +93,7 @@ class CLOA(pl.LightningModule):
         return z
 
     def shared_step(self, batch):
-        (x_i, x_j), fine_label = batch
+        (x_i, x_j), fine_label, parent_label = batch
         z_i = self.forward(x_i)
         z_j = self.forward(x_j)
 
@@ -105,8 +107,18 @@ class CLOA(pl.LightningModule):
             loss += self.OAR(z_i, fine_label)
         return loss
 
+    def on_train_start(self) -> None:
+        #for logging purpose only
+        model = ''
+        if self.OAR:
+            model += 'oar_'
+        if self.supervised:
+            model += 'supervised_'
+        model += 'model_'
+        self.log('model', model)
+
     def training_step(self, batch, batch_idx):
-        (x_i, _), fine_label = batch
+        (x_i, _), fine_label, parent_label = batch
         z_i = self.forward(x_i)
         loss = self.shared_step(batch)
         self.log('train_loss', loss, sync_dist=True)
@@ -114,7 +126,7 @@ class CLOA(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        (x_i, _), fine_label = batch
+        (x_i, _), fine_label, parent_label = batch
         z_i = self.forward(x_i)
         k = 100
 
@@ -128,7 +140,7 @@ class CLOA(pl.LightningModule):
         return loss
     
     def test_step(self, batch, batch_idx):
-        (x_i, _), _ = batch
+        (x_i, _), _, _ = batch
         z_i = self.forward(x_i)
         
         # Calculate embedding variance
