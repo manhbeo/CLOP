@@ -48,9 +48,6 @@ class CLOA(pl.LightningModule):
             self.num_classes = 100
             self.output_dim = 128
             temperature = 0.5
-        elif dataset == "inaturalist":
-            self.encoder = ResNet50()
-            self.num_classes = 1000
         elif dataset == "imagenet":
             self.encoder = ResNet50()
             self.num_classes = 1000
