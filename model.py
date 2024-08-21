@@ -1,12 +1,9 @@
-from lightly.models.modules.heads import SimCLRProjectionHead, BarlowTwinsProjectionHead, VICRegProjectionHead
+from lightly.models.modules.heads import SimCLRProjectionHead
 from torchvision import models
 import torch.nn as nn
 from OARLoss import OARLoss
-from lightly.loss.barlow_twins_loss import BarlowTwinsLoss
-from lightly.loss.dcl_loss import DCLLoss
-from lightly.loss.vicreg_loss import VICRegLoss
 from lightly.loss.ntx_ent_loss import NTXentLoss
-from losses import Supervised_NTXentLoss
+from supervised import Supervised_NTXentLoss
 import pytorch_lightning as pl
 import torch
 from knn_predict import knn_predict
@@ -37,62 +34,41 @@ class ResNet50_ImgNet(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, learning_rate=6.5, lr_schedule="exp", optimizer="lars", criterion="nxt_ent", batch_size=4096, dataset="cifar100", OAR=True, OAR_only=True):
+    def __init__(self, criterion="nxt_ent", batch_size=128, dataset="cifar100", OAR=True, OAR_only=True):
         super(CLOA, self).__init__()
 
         self.num_classes = 0
+        self.output_dim = 128
         if dataset == "cifar100":
             self.encoder = ResNet50_CIFAR()
             self.num_classes = 100
-        if dataset == "cifar10":
-            self.encoder = ResNet50_CIFAR()
-            self.num_classes = 10
+            self.output_dim = 128
         elif dataset == "imagenet":
             self.encoder = ResNet50_ImgNet()
 
         self.supervised = False
+
         if criterion == "nxt_ent":
             if dataset == "cifar100": temperature = 0.5
             else: temperature = 0.1
             self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
-            self.projection_head = SimCLRProjectionHead(output_dim=128)
-            self.output_dim = 128
-        elif criterion == "barlow":
-            self.criterion = BarlowTwinsLoss(lambda_param=5e-3, gather_distributed=True)
-            self.projection_head = BarlowTwinsProjectionHead(output_dim = 8192)
-            self.output_dim = 8192
-            # batch_size = 256
-        elif criterion == "vicreg":
-            self.criterion = VICRegLoss(gather_distributed=True)
-            self.projection_head = VICRegProjectionHead(output_dim = 8192)
-            self.output_dim = 8192
-        elif criterion == "dcl":
-            self.criterion = DCLLoss(gather_distributed=True)
-            self.projection_head = SimCLRProjectionHead(output_dim=128)
-            self.output_dim = 128
-            # batch_size = 256
         elif criterion == "supervised_nxt_ent":
             if dataset == "cifar100": temperature = 0.5
             else: temperature = 0.1
             self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
-            self.projection_head = SimCLRProjectionHead(output_dim=128)
-            self.output_dim = 128
             self.supervised = True
-        self.OAR = None
-        self.OAR_only = False
+
         if OAR_only: 
-            self.criterion = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=0.5)
-            self.projection_head = SimCLRProjectionHead(output_dim=128)
-            self.output_dim = 128
+            self.criterion = OARLoss(self.num_classes, embedding_dim=self.output_dim)
             self.OAR_only = OAR_only
         elif OAR:
-            self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=0.5)
+            self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim)
 
-        # self.batch_size = batch_size
-        self.optimizer = optimizer
+        self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
+        self.OAR = None
+        self.OAR_only = False
+
         self.learning_rate = 0.075 * math.sqrt(batch_size)
-        # self.learning_rate = learning_rate
-        self.lr_schedule = lr_schedule
         self.feature_bank_size = batch_size
         self._init_feature_bank(self.feature_bank_size)
     
@@ -173,21 +149,8 @@ class CLOA(pl.LightningModule):
 
     
     def configure_optimizers(self):
-        if self.optimizer == "sgd":
-            optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate, momentum=0.9)
-        elif self.optimizer == "adam":
-            optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        elif self.optimizer == "adamw":
-            optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate)
-        elif self.optimizer == "lars":
-            optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
-
-        if self.lr_schedule == "cosine":    
-            self.scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=1000) #TODO: get some warm up
-        elif self.lr_schedule == "linear":
-            self.scheduler = torch.optim.lr_scheduler.LinearLR(optimizer, total_iters=500)
-        elif self.lr_schedule == "exp":
-            self.scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+        optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
 
         scheduler_config = {
             "scheduler": self.scheduler,

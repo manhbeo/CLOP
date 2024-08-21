@@ -6,7 +6,7 @@ class OARLoss(nn.Module):
     """
     Orthogonal Anchor Regression Loss with SVD-initialized anchors. Add this to a (main) loss function
     """
-    def __init__(self, num_classes: int = 100, embedding_dim: int = 128, lambda_value: float = 0.5):
+    def __init__(self, num_classes: int = 100, embedding_dim: int = 128, lambda_value: float = 1.0):
         """
         Args:
             num_classes (int): Number of classes, and thus the number of anchors.

@@ -5,3 +5,4 @@ test.ipynb
 wandb
 .cache
 weights
+losses.py
