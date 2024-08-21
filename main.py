@@ -45,8 +45,8 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval")
-    if dataset == "cifar100": 
-        num_classes = 100
+    if dataset == "cifar10": 
+        num_classes = 10
         feature_dim = 128
     elif dataset == "imagenet":
         num_classes = 1000
@@ -81,8 +81,8 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
 def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
     data_module = CustomEvaluationDataModule(batch_size=batch_size)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Test")
-    if dataset == "cifar100": 
-        num_classes = 100
+    if dataset == "cifar10": 
+        num_classes = 10
         feature_dim = 128
     elif dataset == "imagenet":
         num_classes = 1000

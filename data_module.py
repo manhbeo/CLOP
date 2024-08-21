@@ -9,12 +9,11 @@ import torch.distributed as dist
 #TODO: consider iNaturalist
 class CustomCIFARDataset(Dataset):
     def __init__(self, root, train=True, transform=None):
-        self.transform = transform
-        self.dataset = datasets.CIFAR100(root=root, train=train, download=True)
-        file_path = os.path.join(root, 'cifar-100-python', 'train' if train else 'test')
+        self.dataset = datasets.CIFAR10(root=root, train=train, download=True)
+        file_path = os.path.join(root, 'cifar-10-batches-py', 'data_batch_1' if train else 'test_batch')
         with open(file_path, 'rb') as f:
             self.data = pickle.load(f, encoding='latin1')
-        self.fine_labels = self.data['fine_labels']
+        self.fine_labels = self.data['labels']
 
     def __getitem__(self, index):
         # Get an image and its fine label
