@@ -52,7 +52,7 @@ class CLOA(pl.LightningModule):
 
         self.supervised = supervised
         self.OAR = None
-        self.OAR_only = False
+        self.OAR_only = OAR_only
         if not self.supervised:
             self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
         elif self.supervised:
@@ -158,7 +158,7 @@ class CLOA(pl.LightningModule):
     
     def configure_optimizers(self):
         optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
-        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
 
         scheduler_config = {
             "scheduler": self.scheduler,
