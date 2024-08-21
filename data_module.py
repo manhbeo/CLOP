@@ -16,24 +16,10 @@ class CustomDataset(Dataset):
             with open(file_path, 'rb') as f:
                 self.data = pickle.load(f, encoding='latin1')
             self.fine_labels = self.data['fine_labels']
-        elif dataset == "inaturalist":
-            self.dataset = ImageFolder(root=os.path.join(root, 'train' if train else 'val'), transform=transform)
-            self.fine_labels = [s[1] for s in self.dataset.samples]
-
-            # Load parent labels if available
-            parent_label_path = os.path.join(root, 'parent_labels.pkl')
-            if os.path.exists(parent_label_path):
-                with open(parent_label_path, 'rb') as f:
-                    self.parent_labels = pickle.load(f)
-            else:
-                self.parent_labels = [None] * len(self.fine_labels)
 
     def __getitem__(self, index):
         # Get an image and its fine label
         img, fine_label = self.dataset[index]
-        parent_label = None
-        if self.parent_labels is not None:
-            parent_label = self.parent_labels[index]
 
         # Transform the image if a transform is provided
         if self.transform is not None:
@@ -43,7 +29,7 @@ class CustomDataset(Dataset):
             img1 = img
             img2 = img
 
-        return (img1, img2), fine_label, parent_label
+        return (img1, img2), fine_label
 
     def __len__(self):
         return len(self.dataset)
@@ -61,9 +47,6 @@ class CIFARDataModule(pl.LightningDataModule):
         if self.dataset == "cifar100":
             self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
             crop_size = 32
-        elif self.dataset == "inaturalist":
-            self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            crop_size = 244
 
         self.train_transform = transforms.Compose([
             transforms.RandomResizedCrop(crop_size, scale=(0.2, 1.0)),
@@ -122,9 +105,6 @@ class CIFAREvaluationDataModule(pl.LightningDataModule):
         # Set the correct normalization for the chosen dataset
         if self.dataset == "cifar100":
             self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
-            crop_size = 32
-        elif self.dataset == "inaturalist":
-            self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             crop_size = 32
 
         self.transform = transforms.Compose([

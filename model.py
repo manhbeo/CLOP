@@ -93,7 +93,7 @@ class CLOA(pl.LightningModule):
         return z
 
     def shared_step(self, batch):
-        (x_i, x_j), fine_label, parent_label = batch
+        (x_i, x_j), fine_label = batch
         z_i = self.forward(x_i)
         z_j = self.forward(x_j)
 
@@ -118,7 +118,7 @@ class CLOA(pl.LightningModule):
         self.log('model', model)
 
     def training_step(self, batch, batch_idx):
-        (x_i, _), fine_label, parent_label = batch
+        (x_i, _), fine_label = batch
         z_i = self.forward(x_i)
         loss = self.shared_step(batch)
         self.log('train_loss', loss, sync_dist=True)
@@ -126,7 +126,7 @@ class CLOA(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        (x_i, _), fine_label, parent_label = batch
+        (x_i, _), fine_label = batch
         z_i = self.forward(x_i)
         k = 100
 
@@ -140,7 +140,7 @@ class CLOA(pl.LightningModule):
         return loss
     
     def test_step(self, batch, batch_idx):
-        (x_i, _), _, _ = batch
+        (x_i, _), _ = batch
         z_i = self.forward(x_i)
         
         # Calculate embedding variance
