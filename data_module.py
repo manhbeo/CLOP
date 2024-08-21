@@ -38,7 +38,7 @@ class CustomDataset(Dataset):
         return len(self.dataset)
 
 
-class CIFARDataModule(pl.LightningDataModule):
+class CustomDataModule(pl.LightningDataModule):
     def __init__(self, data_dir='data', batch_size=32, dataset="cifar100"):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
@@ -100,7 +100,7 @@ class CIFARDataModule(pl.LightningDataModule):
         return DataLoader(self.cifar_test, batch_size=self.batch_size, drop_last=True, num_workers=16)
 
 
-class CIFAREvaluationDataModule(pl.LightningDataModule):
+class CustomEvaluationDataModule(pl.LightningDataModule):
     def __init__(self, data_dir='./data', batch_size=32, val_split=0.2, dataset="cifar100"):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
@@ -126,7 +126,7 @@ class CIFAREvaluationDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         # Split dataset into train, val, and test
         if stage == 'fit' or stage is None:
-            cifar_full = CustomDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
+            cifar_full = CustomDataset(self.data_dir, self.dataset, train=True, transform=self.transform)
 
             train_size = int((1 - self.val_split) * len(cifar_full))
             val_size = len(cifar_full) - train_size
@@ -135,7 +135,7 @@ class CIFAREvaluationDataModule(pl.LightningDataModule):
             )
 
         if stage == 'test' or stage is None:
-            self.cifar_test = CustomDataset(self.data_dir, self.dataset, train=False, transform=self.train_transform)
+            self.cifar_test = CustomDataset(self.data_dir, self.dataset, train=False, transform=self.transform)
 
 
     def train_dataloader(self):
