@@ -4,9 +4,8 @@ import os
 import pickle
 import pytorch_lightning as pl
 import torch
-from torchvision.datasets import ImageFolder
 
-#TODO: do iNaturalist
+#TODO: do iNaturalist and ImgNet
 class CustomDataset(Dataset):
     def __init__(self, root, dataset, train=True, transform=None):
         self.transform = transform
@@ -16,6 +15,10 @@ class CustomDataset(Dataset):
             with open(file_path, 'rb') as f:
                 self.data = pickle.load(f, encoding='latin1')
             self.fine_labels = self.data['fine_labels']
+
+        if dataset == "imagenet": 
+            subdir = 'train' if train else 'val'
+            self.dataset = datasets.ImageFolder(root=os.path.join(root, subdir), transform=self.transform)
 
     def __getitem__(self, index):
         # Get an image and its fine label
@@ -47,6 +50,9 @@ class CIFARDataModule(pl.LightningDataModule):
         if self.dataset == "cifar100":
             self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
             crop_size = 32
+        elif self.dataset == "imagenet":
+            self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            crop_size = 224
 
         self.train_transform = transforms.Compose([
             transforms.RandomResizedCrop(crop_size, scale=(0.2, 1.0)),
@@ -106,6 +112,9 @@ class CIFAREvaluationDataModule(pl.LightningDataModule):
         if self.dataset == "cifar100":
             self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
             crop_size = 32
+        elif self.dataset == "imagenet":
+            self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            crop_size = 224
 
         self.transform = transforms.Compose([
             transforms.Resize(32 if dataset == "cifar100" else 256),

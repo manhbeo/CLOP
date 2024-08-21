@@ -10,6 +10,7 @@ from knn_predict import knn_predict
 from LARs import LARS
 import math
 
+#TODO: code ImgNet
 class ResNet50_CIFAR(nn.Module):
     def __init__(self):
         super(ResNet50_CIFAR, self).__init__()
@@ -39,6 +40,7 @@ class CLOA(pl.LightningModule):
 
         self.num_classes = 0
         self.output_dim = 128
+        self.dataset = dataset
         if dataset == "cifar100":
             self.encoder = ResNet50_CIFAR()
             self.num_classes = 100
@@ -49,6 +51,8 @@ class CLOA(pl.LightningModule):
             self.num_classes = 1000
         elif dataset == "imagenet":
             self.encoder = ResNet50()
+            self.num_classes = 1000
+            self.output_dim = 1024
 
         self.supervised = supervised
         self.OAR = None
@@ -109,7 +113,7 @@ class CLOA(pl.LightningModule):
 
     def on_train_start(self) -> None:
         #for logging purpose only
-        model = ''
+        model = self.dataset + '_'
         if self.OAR:
             model += 'oar_'
         if self.supervised:

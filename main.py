@@ -22,7 +22,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
         monitor='val_loss',
         mode="min",
         dirpath='',
-        filename='{model}-{epoch:04d}-{val_acc:.2f}',
+        filename='{model}-{epoch:04d}',
         save_weights_only=True,
         every_n_epochs=1,
         verbose=True
@@ -57,9 +57,9 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
         monitor='val_loss',
         mode="min",
         dirpath='',
-        filename='model-{epoch:04d}-{val_top1:.2f}',
+        filename='{model}-{epoch:04d}',
         save_weights_only=True,
-        every_n_epochs=3,
+        every_n_epochs=1,
         verbose=True
     )
 
