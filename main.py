@@ -50,7 +50,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
         feature_dim = 128
     elif dataset == "imagenet":
         num_classes = 1000
-        feature_dim = 128
+        feature_dim = 1024
 
     linear_classifier = LinearClassifier(
         model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True,
@@ -86,7 +86,7 @@ def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
         feature_dim = 128
     elif dataset == "imagenet":
         num_classes = 1000
-        feature_dim = 128
+        feature_dim = 1024
 
     trainer = pl.Trainer(logger=wandb_logger,
                     devices="auto",
