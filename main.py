@@ -48,6 +48,9 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
     if dataset == "cifar100": 
         num_classes = 100
         feature_dim = 128
+    elif dataset == "imagenet":
+        num_classes = 1000
+        feature_dim = 128
 
     linear_classifier = LinearClassifier(
         model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True,
@@ -80,6 +83,9 @@ def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Test")
     if dataset == "cifar100": 
         num_classes = 100
+        feature_dim = 128
+    elif dataset == "imagenet":
+        num_classes = 1000
         feature_dim = 128
 
     trainer = pl.Trainer(logger=wandb_logger,
