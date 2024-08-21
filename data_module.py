@@ -57,7 +57,6 @@ class CustomImageNetDataset(Dataset):
     def _extract_dataset(self):
         # This will trigger the extraction
         datasets.ImageNet(root=self.root, split=self.split, download=True)
-        del temp_dataset  # Free up memory
 
     def _setup_labels(self):
         self.labels = self.dataset.targets
