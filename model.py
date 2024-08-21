@@ -115,12 +115,16 @@ class CLOA(pl.LightningModule):
 
     def on_train_start(self) -> None:
         #for logging purpose only
-        model = self.dataset + '_'
-        if self.OAR:
-            model += 'oar_'
-        if self.supervised:
-            model += 'supervised_'
-        self.log('model', {'model': model})
+        model = '5'
+        if self.dataset == "cifar_100": 
+            model = '0'
+        elif self.dataset == "imagenet":
+            model = '1'
+        if self.OAR: model += '1'
+        else: model += '0'
+        if self.supervised: model += '1'
+        else: model += '0'
+        self.log('model', int(model))
 
     def training_step(self, batch, batch_idx):
         (x_i, _), fine_label = batch
