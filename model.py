@@ -43,18 +43,14 @@ class CLOA(pl.LightningModule):
             self.encoder = ResNet50_CIFAR()
             self.num_classes = 100
             self.output_dim = 128
+            temperature = 0.5
         elif dataset == "imagenet":
             self.encoder = ResNet50_ImgNet()
 
         self.supervised = False
-
         if criterion == "nxt_ent":
-            if dataset == "cifar100": temperature = 0.5
-            else: temperature = 0.1
             self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
         elif criterion == "supervised_nxt_ent":
-            if dataset == "cifar100": temperature = 0.5
-            else: temperature = 0.1
             self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
             self.supervised = True
 

@@ -124,4 +124,4 @@ if __name__ == '__main__':
     elif args.test:
         test(args.pretrain_model, args.pretrain_linear_classifier_dir, args.batch_size, args.dataset)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR, args.OAR_only)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR, args.criterion, args.OAR_only)
