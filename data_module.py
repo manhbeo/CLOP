@@ -4,9 +4,10 @@ import os
 import pickle
 import pytorch_lightning as pl
 import torch
+import torch.distributed as dist
 
 #TODO: consider iNaturalist
-class CustomDataset(Dataset):
+class CustomCIFARDataset(Dataset):
     def __init__(self, root, dataset, train=True, transform=None):
         self.transform = transform
         if dataset == "cifar100": 
@@ -15,10 +16,6 @@ class CustomDataset(Dataset):
             with open(file_path, 'rb') as f:
                 self.data = pickle.load(f, encoding='latin1')
             self.fine_labels = self.data['fine_labels']
-
-        if dataset == "imagenet": 
-            subdir = 'train' if train else 'val'
-            self.dataset = datasets.ImageFolder(root=os.path.join(root, subdir), transform=self.transform)
 
     def __getitem__(self, index):
         # Get an image and its fine label
@@ -33,6 +30,47 @@ class CustomDataset(Dataset):
             img2 = img
 
         return (img1, img2), fine_label
+
+    def __len__(self):
+        return len(self.dataset)
+
+
+class CustomImageNetDataset(Dataset):
+    def __init__(self, root, split='train', transform=None):
+        self.root = root
+        self.split = split
+        self.transform = transform
+        
+        # Check if the dataset is already extracted
+        if not os.path.exists(os.path.join(root, split)):
+            # If running in distributed mode, only let one process extract
+            if dist.is_initialized():
+                if dist.get_rank() == 0:
+                    self._extract_dataset()
+                dist.barrier()  # Wait for rank 0 to finish extracting
+            else:
+                self._extract_dataset()
+        
+        self.dataset = datasets.ImageNet(root=root, split=split)
+        
+        self._setup_labels()
+
+    def _extract_dataset(self):
+        # This will trigger the extraction
+        datasets.ImageNet(root=self.root, split=self.split, download=True)
+        del temp_dataset  # Free up memory
+
+    def _setup_labels(self):
+        self.labels = self.dataset.targets
+
+    def __getitem__(self, index):
+        img, label = self.dataset[index]
+        
+        if self.transform is not None:
+            img1 = self.transform(img)
+            img2 = self.transform(img)
+
+        return (img1, img2), label
 
     def __len__(self):
         return len(self.dataset)
@@ -75,29 +113,37 @@ class CustomDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None, fraction=1.0):
         # Assign train/val datasets for use in dataloaders
-        cifar_full = CustomDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
+        if stage == 'fit' or stage is None:
+            if self.dataset == "cifar100":
+                full_dataset = CustomCIFARDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
+            elif self.dataset == "imagenet":
+                full_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
 
-        train_size = int(len(cifar_full) * fraction)
-        train_indices = torch.randperm(len(cifar_full))[:train_size]
-        train_dataset = Subset(cifar_full, train_indices)
+            train_size = int(len(full_dataset) * fraction)
+            train_indices = torch.randperm(len(full_dataset))[:train_size]
+            train_dataset = Subset(full_dataset, train_indices)
 
-        val_size = int(train_size * 0.1)
-        train_size = int(train_size * 0.9)
+            val_size = int(train_size * 0.1)
+            train_size = int(train_size * 0.9)
 
-        self.cifar_train, self.cifar_val = random_split(
-            train_dataset, [train_size, val_size], generator=torch.Generator()
-        )
+            self.train_dataset, self.val_dataset = random_split(
+                train_dataset, [train_size, val_size], generator=torch.Generator()
+            )
+        if stage == 'test' or stage is None:
+            if self.dataset == "cifar100":
+                self.test_dataset = CustomCIFARDataset(self.data_dir, self.dataset, train=False, transform=self.test_transform)
+            elif self.dataset == "imagenet":
+                self.test_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.test_transform)
 
-        self.cifar_test = CustomDataset(self.data_dir, self.dataset, train=False, transform=self.test_transform)
 
     def train_dataloader(self):
-        return DataLoader(self.cifar_train, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=16)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=16)
 
     def val_dataloader(self):
-        return DataLoader(self.cifar_val, batch_size=self.batch_size, drop_last=True, num_workers=16)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, drop_last=True, num_workers=16)
     
     def test_dataloader(self):
-        return DataLoader(self.cifar_test, batch_size=self.batch_size, drop_last=True, num_workers=16)
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, drop_last=True, num_workers=16)
 
 
 class CustomEvaluationDataModule(pl.LightningDataModule):
@@ -126,16 +172,23 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         # Split dataset into train, val, and test
         if stage == 'fit' or stage is None:
-            cifar_full = CustomDataset(self.data_dir, self.dataset, train=True, transform=self.transform)
+            if self.dataset == "cifar100":
+                full_dataset = CustomCIFARDataset(self.data_dir, self.dataset, train=True, transform=self.train_transform)
+            elif self.dataset == "imagenet":
+                full_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
 
-            train_size = int((1 - self.val_split) * len(cifar_full))
-            val_size = len(cifar_full) - train_size
+            train_size = int((1 - self.val_split) * len(full_dataset))
+            val_size = len(full_dataset) - train_size
             self.cifar_train, self.cifar_val = random_split(
-                cifar_full, [train_size, val_size], generator=torch.Generator()
+                full_dataset, [train_size, val_size], generator=torch.Generator()
             )
 
         if stage == 'test' or stage is None:
-            self.cifar_test = CustomDataset(self.data_dir, self.dataset, train=False, transform=self.transform)
+            if self.dataset == "cifar100":
+                self.test_dataset = CustomCIFARDataset(self.data_dir, self.dataset, train=False, transform=self.test_transform)
+            elif self.dataset == "imagenet":
+                self.test_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.test_transform)
+
 
 
     def train_dataloader(self):

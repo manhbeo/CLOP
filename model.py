@@ -41,6 +41,8 @@ class CLOA(pl.LightningModule):
         self.num_classes = 0
         self.output_dim = 128
         self.dataset = dataset
+        temperature = 0.1
+
         if dataset == "cifar100":
             self.encoder = ResNet50_CIFAR()
             self.num_classes = 100
