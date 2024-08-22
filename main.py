@@ -108,6 +108,9 @@ def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
     
     trainer.test(linear_classifier, datamodule=data_module)
 
+def extract_data(dataset):
+    data_module = CustomDataModule(batch_size=32, dataset=dataset)
+
 
 if __name__ == '__main__':
     seed_everything(1234) 
@@ -122,11 +125,14 @@ if __name__ == '__main__':
     parser.add_argument("--OAR", action='store_true')
     parser.add_argument("--OAR_only", action='store_true')
     parser.add_argument("--supervised", action='store_true')
+    parser.add_argument("--extract_data", action='store_true')
     args = parser.parse_args()
 
     if args.eval:
         eval(args.pretrain_model, args.batch_size, args.epochs, args.dataset, args.criterion)
     elif args.test:
         test(args.pretrain_model, args.pretrain_linear_classifier_dir, args.batch_size, args.dataset)
+    elif args.extract_data:
+        extract_data(args.dataset)
     else:
         train(args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR, args.OAR_only, args.supervised)
