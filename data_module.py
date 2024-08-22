@@ -152,7 +152,7 @@ class CustomDataModule(pl.LightningDataModule):
             if self.dataset == "cifar10":
                 full_dataset = CustomCIFAR10Dataset(self.data_dir, train=True, transform=self.train_transform)
             elif self.dataset == "cifar100":
-                self.test_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.test_transform)
+                full_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.test_transform)
             elif self.dataset == "imagenet":
                 full_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
 
@@ -213,7 +213,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             if self.dataset == "cifar10":
                 full_dataset = CustomCIFAR10Dataset(self.data_dir, train=True, transform=self.train_transform)
             elif self.dataset == "cifar100":
-                self.test_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.test_transform)
+                full_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.test_transform)
             elif self.dataset == "imagenet":
                 full_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
 
