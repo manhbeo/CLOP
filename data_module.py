@@ -138,8 +138,6 @@ class CustomDataModule(pl.LightningDataModule):
                 transforms.ToTensor(),
                 self.normalize
             ])
-
-        print(f'dataset.startswith("cifar"): {dataset.startswith("cifar")}')
         self.test_transform = transforms.Compose([
             transforms.Resize(32 if dataset.startswith("cifar") else 256),
             transforms.CenterCrop(32 if dataset.startswith("cifar") else 224),

@@ -48,6 +48,9 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
     if dataset == "cifar10": 
         num_classes = 10
         feature_dim = 128
+    elif dataset == "cifar100": 
+        num_classes = 100
+        feature_dim = 128
     elif dataset == "imagenet":
         num_classes = 1000
         feature_dim = 1024
@@ -84,6 +87,9 @@ def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
     if dataset == "cifar10": 
         num_classes = 10
         feature_dim = 128
+    elif dataset == "cifar100": 
+        num_classes = 100
+        feature_dim = 128
     elif dataset == "imagenet":
         num_classes = 1000
         feature_dim = 1024
@@ -110,9 +116,7 @@ def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
 
 def extract_data(dataset, test=None):
     data_module = CustomDataModule(batch_size=32, dataset=dataset)
-    if test:  
-        data_module.setup(stage='eval')
-    else: data_module.setup(stage="fit")
+    if test is None: data_module.setup(stage="fit")
 
 
 if __name__ == '__main__':
