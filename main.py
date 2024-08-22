@@ -108,9 +108,11 @@ def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
     
     trainer.test(linear_classifier, datamodule=data_module)
 
-def extract_data(dataset):
+def extract_data(dataset, test=None):
     data_module = CustomDataModule(batch_size=32, dataset=dataset)
-    data_module.setup()
+    if test:  
+        data_module.setup(stage='eval')
+    else: data_module.setup(stage="fit")
 
 
 if __name__ == '__main__':
@@ -134,6 +136,6 @@ if __name__ == '__main__':
     elif args.test:
         test(args.pretrain_model, args.pretrain_linear_classifier_dir, args.batch_size, args.dataset)
     elif args.extract_data:
-        extract_data(args.dataset)
+        extract_data(args.dataset, args.test)
     else:
         train(args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR, args.OAR_only, args.supervised)
