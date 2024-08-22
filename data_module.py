@@ -36,7 +36,7 @@ class CustomCIFAR10Dataset(Dataset):
 class CustomCIFAR100Dataset(Dataset):
     def __init__(self, root, train=True, transform=None):
         self.transform = transform
-        self.dataset_obj = datasets.CIFAR100(root=root, train=train, download=True)
+        self.dataset = datasets.CIFAR100(root=root, train=train, download=True)
         file_path = os.path.join(root, 'cifar-100-python', 'train' if train else 'test')
         with open(file_path, 'rb') as f:
             self.data = pickle.load(f, encoding='latin1')
