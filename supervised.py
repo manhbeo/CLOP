@@ -8,9 +8,8 @@ class Supervised_NTXentLoss(nn.Module):
         super(Supervised_NTXentLoss, self).__init__()
         self.temperature = temperature
         self.use_distributed = gather_distributed and dist.world_size() > 1
-        self.cross_entropy = nn.CrossEntropyLoss()
 
-    def forward(self, out0: torch.Tensor, out1: torch.Tensor, labels: torch.Tensor, coarse_labels: torch.Tensor = None):
+    def forward(self, out0: torch.Tensor, out1: torch.Tensor, labels: torch.Tensor):
         out0 = F.normalize(out0, dim=1)
         out1 = F.normalize(out1, dim=1)
 
@@ -19,20 +18,15 @@ class Supervised_NTXentLoss(nn.Module):
             out0_large = torch.cat(dist.gather(out0), 0)
             out1_large = torch.cat(dist.gather(out1), 0)
             labels_large = torch.cat(dist.gather(labels), 0)
-            if coarse_labels is not None:
-                coarse_labels_large = torch.cat(dist.gather(coarse_labels), 0)
                 
         else:
             # Use the current process's data if not using distributed mode or single process
             out0_large = out0
             out1_large = out1
             labels_large = labels
-            coarse_labels_large = coarse_labels
 
         # Use the gathered data for further processing
         out0, out1, labels = out0_large, out1_large, labels_large
-        if coarse_labels is not None:
-            coarse_labels = coarse_labels_large
 
 
         # Compute the cosine similarity matrix
