@@ -76,7 +76,7 @@ class CLOA(pl.LightningModule):
 
         self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
 
-        self.learning_rate = 0.075 * math.sqrt(batch_size) if not dataset.startswith("cifar") else 0.3 * batch_size/256
+        self.learning_rate = 0.075 * math.sqrt(batch_size)
         self.feature_bank_size = 1024
         self._init_feature_bank(self.feature_bank_size)
     
@@ -160,7 +160,7 @@ class CLOA(pl.LightningModule):
         optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
         self.scheduler = CosineWarmupScheduler(
                 optimizer=optimizer,
-                warmup_epochs=10,
+                warmup_epochs=20 if self.dataset.startswith("cifar") else 10,
                 max_epochs=int(self.trainer.estimated_stepping_batches),
             )
 
