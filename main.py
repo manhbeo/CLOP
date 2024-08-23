@@ -7,11 +7,11 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=False, supervised=False):
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=False, supervised=False, devices=1):
     if pretrain_dir != None: #if pretrain_dir exist
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOA(batch_size, dataset, OAR, OAR_only, supervised)
+        model = CLOA(batch_size, dataset, OAR, OAR_only, supervised, devices)
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train")
@@ -130,6 +130,7 @@ if __name__ == '__main__':
     parser.add_argument("--pretrain_model", type=str)
     parser.add_argument("--pretrain_linear_classifier_dir", type=str)
     parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--devices", type=int, default=1)
     parser.add_argument("--dataset", type=str, default="cifar10")
     parser.add_argument("--OAR", action='store_true')
     parser.add_argument("--OAR_only", action='store_true')
@@ -144,4 +145,4 @@ if __name__ == '__main__':
     elif args.extract_data:
         extract_data(args.dataset, args.test)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR, args.OAR_only, args.supervised)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR, args.OAR_only, args.supervised, args.devices)

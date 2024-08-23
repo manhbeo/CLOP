@@ -36,7 +36,7 @@ class ResNet50(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, batch_size=128, dataset="cifar100", OAR=True, OAR_only=False, supervised=False):
+    def __init__(self, batch_size=128, dataset="cifar100", OAR=True, OAR_only=False, supervised=False, devices=1):
         super(CLOA, self).__init__()
 
         self.num_classes = 0
@@ -76,7 +76,8 @@ class CLOA(pl.LightningModule):
 
         self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
 
-        self.learning_rate = 0.075 * math.sqrt(batch_size)
+        base_lr = 0.075
+        self.learning_rate = base_lr * math.sqrt(batch_size*devices)
         self.feature_bank_size = 1024
         self._init_feature_bank(self.feature_bank_size)
     
@@ -160,7 +161,7 @@ class CLOA(pl.LightningModule):
         optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
         self.scheduler = CosineWarmupScheduler(
                 optimizer=optimizer,
-                warmup_epochs=0,
+                warmup_epochs=0 if self.dataset.startswith("cifar") else 10,
                 max_epochs=int(self.trainer.estimated_stepping_batches),
             )
 
