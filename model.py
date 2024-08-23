@@ -9,6 +9,7 @@ import torch
 from knn_predict import knn_predict
 from LARs import LARS
 import math
+from lightly.utils.scheduler import CosineWarmupScheduler
 
 #TODO: code ImgNet
 class ResNet50_CIFAR(nn.Module):
@@ -157,7 +158,14 @@ class CLOA(pl.LightningModule):
     
     def configure_optimizers(self):
         optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
-        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
+        self.scheduler = {
+            "scheduler": CosineWarmupScheduler(
+                optimizer=optimizer,
+                warmup_epochs=0,
+                max_epochs=int(self.trainer.estimated_stepping_batches),
+            ),
+            "interval": "step",
+        }
 
         scheduler_config = {
             "scheduler": self.scheduler,
