@@ -3,7 +3,7 @@ from torchvision import models
 import torch.nn as nn
 from OARLoss import OARLoss
 from lightly.loss.ntx_ent_loss import NTXentLoss
-from supervised import SupConLoss
+from supervised import Supervised_NTXentLoss
 import pytorch_lightning as pl
 import torch
 from knn_predict import knn_predict
@@ -65,7 +65,7 @@ class CLOA(pl.LightningModule):
         if not self.supervised:
             self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
         elif self.supervised:
-            self.criterion = SupConLoss(temperature=temperature)
+            self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
 
         if OAR_only: 
             self.criterion = OARLoss(self.num_classes, embedding_dim=self.output_dim)
@@ -106,12 +106,8 @@ class CLOA(pl.LightningModule):
         z_i = self.forward(x_i)
         z_j = self.forward(x_j)
 
-        features = torch.stack([z_i, z_j], dim=1)
-        # if self.supervised: 
-        #     loss = self.criterion(z_i, z_j, fine_label)
         if self.supervised: 
-            # In supervised mode, pass features and labels
-            loss = self.criterion(features, fine_label)
+            loss = self.criterion(z_i, z_j, fine_label)
         elif self.OAR_only:
             loss = self.criterion(z_i, fine_label)
         else:    
