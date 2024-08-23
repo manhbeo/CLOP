@@ -40,7 +40,6 @@ class CustomCIFAR100Dataset(Dataset):
         file_path = os.path.join(root, 'cifar-100-python', 'train' if train else 'test')
         with open(file_path, 'rb') as f:
             self.data = pickle.load(f, encoding='latin1')
-        self.labels = self.data['coarse_labels']
 
     def __getitem__(self, index):
         # Get an image and its fine label
