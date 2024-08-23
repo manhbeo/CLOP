@@ -19,8 +19,8 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
     #Save the model after each 1 epoch
     #next use iNaturalist
     checkpoint_callback = ModelCheckpoint(
-        monitor='val_loss',
-        mode="min",
+        monitor='val_acc',
+        mode="max",
         dirpath='',
         filename='cifar-512-sup-{epoch:04d}',
         save_weights_only=True,
