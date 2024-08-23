@@ -22,7 +22,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
         monitor='val_loss',
         mode="min",
         dirpath='',
-        filename='model-{epoch:04d}',
+        filename='{epoch:03d}',
         save_weights_only=True,
         every_n_epochs=1,
         verbose=True
