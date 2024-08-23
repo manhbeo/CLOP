@@ -141,18 +141,18 @@ class LinearClassifier(LightningModule):
             momentum=0.9,
             weight_decay=0.0,
         )
-        # scheduler = {
-        #     "scheduler": CosineWarmupScheduler(
-        #         optimizer=optimizer,
-        #         warmup_epochs=0,
-        #         max_epochs=int(self.trainer.estimated_stepping_batches),
-        #     ),
-        #     "interval": "step",
-        # }
         scheduler = {
-            "scheduler": torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99),
+            "scheduler": CosineWarmupScheduler(
+                optimizer=optimizer,
+                warmup_epochs=0,
+                max_epochs=int(self.trainer.estimated_stepping_batches),
+            ),
             "interval": "step",
         }
+        # scheduler = {
+        #     "scheduler": torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99),
+        #     "interval": "step",
+        # }
         return [optimizer], [scheduler]
 
     def on_train_epoch_start(self) -> None:
