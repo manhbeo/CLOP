@@ -22,7 +22,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
         monitor='val_loss',
         mode="min",
         dirpath='',
-        filename='cifar-1024-sup-{epoch:04d}',
+        filename='cifar-512-sup-{epoch:04d}',
         save_weights_only=True,
         every_n_epochs=1,
         verbose=True
@@ -120,7 +120,7 @@ def extract_data(dataset, test=None):
 
 
 if __name__ == '__main__':
-    seed_everything(1234) 
+    seed_everything(36) 
     parser = argparse.ArgumentParser()
     parser.add_argument("--eval", action='store_true')
     parser.add_argument("--test", action='store_true')

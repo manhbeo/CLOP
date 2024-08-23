@@ -49,6 +49,7 @@ class CLOA(pl.LightningModule):
                 temperature = 0.5
                 self.num_classes = 10
             elif dataset == "cifar100": 
+                temperature = 0.2
                 self.num_classes = 100
             self.output_dim = 128
             
