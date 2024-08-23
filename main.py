@@ -117,7 +117,7 @@ def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
 
 def extract_data(dataset, test=None):
     data_module = CustomDataModule(batch_size=32, dataset=dataset)
-    if test is None: data_module.setup(stage="fit")
+    if not test: data_module.setup(stage="fit")
 
 
 if __name__ == '__main__':
