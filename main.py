@@ -120,7 +120,7 @@ def extract_data(dataset, test=None):
 
 
 if __name__ == '__main__':
-    seed_everything(123) 
+    seed_everything(1234) 
     parser = argparse.ArgumentParser()
     parser.add_argument("--eval", action='store_true')
     parser.add_argument("--test", action='store_true')
