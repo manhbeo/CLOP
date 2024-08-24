@@ -39,7 +39,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
                         deterministic=True)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'final-{dataset}-{batch_size}-oar:{OAR}-only:{OAR_only}-sup:{supervised}.ckpt')
+    trainer.save_checkpoint(f'final-{dataset}-{batch_size*devices}-oar:{OAR}-only:{OAR_only}-sup:{supervised}.ckpt')
 
 
 def eval(pretrain_dir, batch_size, epochs, dataset):
