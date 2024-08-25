@@ -145,4 +145,4 @@ if __name__ == '__main__':
     elif args.extract_data:
         extract_data(args.dataset, args.test)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_model, args.OAR, args.OAR_only, args.supervised, args.devices)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.OAR_only, args.supervised, args.devices)
