@@ -127,7 +127,7 @@ if __name__ == '__main__':
     parser.add_argument("--eval", action='store_true')
     parser.add_argument("--test", action='store_true')
     parser.add_argument("--epochs", type=int, default=100)
-    parser.add_argument("--pretrain_model", type=str)
+    parser.add_argument("--pretrain_dir", type=str)
     parser.add_argument("--pretrain_linear_classifier_dir", type=str)
     parser.add_argument("--batch_size", type=int, default=256)
     parser.add_argument("--devices", type=int, default=1)
@@ -139,9 +139,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_model, args.batch_size, args.epochs, args.dataset, args.criterion)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset)
     elif args.test:
-        test(args.pretrain_model, args.pretrain_linear_classifier_dir, args.batch_size, args.dataset)
+        test(args.pretrain_dir, args.pretrain_linear_classifier_dir, args.batch_size, args.dataset)
     elif args.extract_data:
         extract_data(args.dataset, args.test)
     else:
