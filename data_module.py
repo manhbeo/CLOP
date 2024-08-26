@@ -147,24 +147,26 @@ class CustomDataModule(pl.LightningDataModule):
     def setup(self, stage=None, fraction=1.0):
         # Assign train/val datasets for use in dataloaders
         if stage == 'fit' or stage is None:
-            if self.dataset == "cifar10":
-                full_dataset = CustomCIFAR10Dataset(self.data_dir, train=True, transform=self.train_transform)
-            elif self.dataset == "cifar100":
-                full_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
+            if self.dataset.startswith("cifar"):
+                if self.dataset == "cifar10":
+                    full_dataset = CustomCIFAR10Dataset(self.data_dir, train=True, transform=self.train_transform)
+                elif self.dataset == "cifar100":
+                    full_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
+                train_size = int(len(full_dataset) * fraction)
+                train_indices = torch.randperm(len(full_dataset))[:train_size]
+                train_dataset = Subset(full_dataset, train_indices)
+
+                val_size = int(train_size * 0.1)
+                train_size = train_size - val_size
+
+                self.train_dataset, self.val_dataset = random_split(
+                    train_dataset, [train_size, val_size], generator=torch.Generator()
+                )
             elif self.dataset == "imagenet":
-                full_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
+                self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
+                self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.test_transform)
 
-            train_size = int(len(full_dataset) * fraction)
-            train_indices = torch.randperm(len(full_dataset))[:train_size]
-            train_dataset = Subset(full_dataset, train_indices)
-
-            val_size = int(train_size * 0.1)
-            train_size = train_size - val_size
-
-            self.train_dataset, self.val_dataset = random_split(
-                train_dataset, [train_size, val_size], generator=torch.Generator()
-            )
-        if stage == 'test' or stage is None:
+        if stage == 'test':
             if self.dataset == "cifar10":
                 self.test_dataset = CustomCIFAR10Dataset(self.data_dir, train=False, transform=self.test_transform)
             elif self.dataset == "cifar100":
