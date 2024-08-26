@@ -38,6 +38,7 @@ class CLOA(pl.LightningModule):
     def __init__(self, batch_size=128, dataset="cifar100", OAR=True, OAR_only=False, supervised=False, devices=1):
         super(CLOA, self).__init__()
         self.dataset = dataset
+        temperature = 0.1
 
         if dataset.startswith("cifar"):
             self.encoder = ResNet50_CIFAR()
