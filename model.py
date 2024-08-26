@@ -83,8 +83,7 @@ class CLOA(pl.LightningModule):
     def _update_feature_bank(self, features, labels):
         batch_size = features.size(0)
         ptr = self.feature_bank_ptr
-        assert self.feature_bank_size % batch_size == 0  # for simplicity
-        # Replace the features at ptr (oldest features first)
+        assert self.feature_bank_size % batch_size == 0
         self.feature_bank[ptr:ptr + batch_size, :] = features.detach()
         self.feature_labels[ptr:ptr + batch_size] = labels.detach()
         # Move the pointer
