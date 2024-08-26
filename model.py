@@ -128,31 +128,21 @@ class CLOA(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         (x_i, _), fine_label = batch
         z_i = self.forward(x_i)
-        k = 100
+        k = 200
 
         pred_labels = knn_predict(z_i, self.feature_bank, self.feature_labels, classes=self.num_classes, knn_k=k, knn_t=0.1)
         correct = (pred_labels == fine_label).sum().item()
         knn_acc = correct / x_i.size(0)
-        self.log(f'val_acc', knn_acc, batch_size=x_i.size(0), sync_dist=True)
+        self.log(f'val_acc-k={k}', knn_acc, batch_size=x_i.size(0), sync_dist=True)
 
-        loss = self.shared_step(batch)
-        self.log('val_loss', loss, sync_dist=True)
-        return loss
-    
-    def test_step(self, batch, batch_idx):
-        (x_i, _), _ = batch
-        z_i = self.forward(x_i)
-        
         # Calculate embedding variance
         z_i_normalized = nn.functional.normalize(z_i, p=2, dim=1)
         embedding_mean = z_i_normalized.mean(dim=0)
         embedding_variance = ((z_i_normalized - embedding_mean) ** 2).mean().item()
-        self.log('test_embedding_variance', embedding_variance, batch_size=z_i.size(0), sync_dist=True)
+        self.log('val_embedding_variance', embedding_variance, batch_size=z_i.size(0), sync_dist=True)
 
-        # Loss calculation
         loss = self.shared_step(batch)
-        self.log('test_loss', loss, sync_dist=True)
-
+        self.log('val_loss', loss, sync_dist=True)
         return loss
 
     
