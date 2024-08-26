@@ -1,9 +1,8 @@
 from torchvision import datasets, transforms
-from torch.utils.data import DataLoader, random_split, Subset, Dataset
+from torch.utils.data import DataLoader, Dataset
 import os
 import pickle
 import pytorch_lightning as pl
-import torch
 import torch.distributed as dist
 
 #TODO: consider iNaturalist
