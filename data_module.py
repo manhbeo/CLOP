@@ -104,7 +104,6 @@ class CustomDataModule(pl.LightningDataModule):
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
         self.dataset = dataset
-        normalize = None
 
         if self.dataset.startswith("cifar"):
             if self.dataset == "cifar10":
@@ -167,7 +166,6 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
         self.dataset = dataset
-        normalize = None
 
         if self.dataset.startswith("cifar"):
             if self.dataset == "cifar10":
