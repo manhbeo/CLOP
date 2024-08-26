@@ -4,7 +4,8 @@ import torch
 from pytorch_lightning import LightningModule
 from torch import Tensor
 from torch.nn import CrossEntropyLoss, Linear, Module
-from torch.optim import SGD, Optimizer
+from torch.optim import Optimizer
+from LARs import LARS
 
 from lightly.utils.benchmarking.topk import mean_topk_accuracy
 from lightly.utils.scheduler import CosineWarmupScheduler
@@ -135,12 +136,7 @@ class LinearClassifier(LightningModule):
         parameters = list(self.classification_head.parameters())
         if not self.freeze_model:
             parameters += self.model.parameters()
-        optimizer = SGD(
-            parameters,
-            lr=0.1 * self.batch_size_per_device * self.trainer.world_size / 256,
-            momentum=0.9,
-            weight_decay=0.0,
-        )
+        optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
         scheduler = {
             "scheduler": CosineWarmupScheduler(
                 optimizer=optimizer,
