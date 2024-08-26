@@ -147,6 +147,7 @@ class CLOA(pl.LightningModule):
         embedding_mean = z_i_normalized.mean(dim=0)
         embedding_variance = ((z_i_normalized - embedding_mean) ** 2).mean().item()
         self.log('test_embedding_variance', embedding_variance, batch_size=z_i.size(0), sync_dist=True)
+        return embedding_variance
 
     
     def configure_optimizers(self):
