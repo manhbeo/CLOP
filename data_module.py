@@ -113,7 +113,6 @@ class CustomDataModule(pl.LightningDataModule):
                 normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
             self.transform = transforms.Compose([
                 # transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
-                transforms.RandomResizedCrop(32),
                 # transforms.RandomHorizontalFlip(),
                 # transforms.RandomVerticalFlip(),
                 AutoAugment(policy=AutoAugmentPolicy.CIFAR10),
@@ -127,7 +126,8 @@ class CustomDataModule(pl.LightningDataModule):
         elif self.dataset == "imagenet":
             self.transform = transforms.Compose([
                 # transforms.RandomResizedCrop(224, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
-                transforms.RandomResizedCrop(224),
+                transforms.Resize(256),  # Resize the shorter side to 256
+                transforms.CenterCrop(224),
                 # transforms.RandomHorizontalFlip(),
                 # transforms.RandomVerticalFlip(),
                 AutoAugment(policy=AutoAugmentPolicy.IMAGENET),
@@ -175,7 +175,6 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                 normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
             self.transform = transforms.Compose([
                 # transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
-                transforms.RandomResizedCrop(32),
                 # transforms.RandomHorizontalFlip(),
                 # transforms.RandomVerticalFlip(),
                 AutoAugment(policy=AutoAugmentPolicy.CIFAR10),
@@ -189,7 +188,8 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
         elif self.dataset == "imagenet":
             self.transform = transforms.Compose([
                 # transforms.RandomResizedCrop(224, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
-                transforms.RandomResizedCrop(224),
+                transforms.Resize(256),  # Resize the shorter side to 256
+                transforms.CenterCrop(224),
                 # transforms.RandomHorizontalFlip(),
                 # transforms.RandomVerticalFlip(),
                 AutoAugment(policy=AutoAugmentPolicy.IMAGENET),
