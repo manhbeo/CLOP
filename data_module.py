@@ -4,7 +4,6 @@ import os
 import pickle
 import pytorch_lightning as pl
 import torch.distributed as dist
-from torchvision.transforms import AutoAugment, AutoAugmentPolicy
 
 #TODO: consider iNaturalist
 class CustomCIFAR10Dataset(Dataset):
@@ -115,7 +114,7 @@ class CustomDataModule(pl.LightningDataModule):
                 # transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
                 # transforms.RandomHorizontalFlip(),
                 # transforms.RandomVerticalFlip(),
-                AutoAugment(policy=AutoAugmentPolicy.CIFAR10),
+                transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
                 # transforms.RandomApply([
                 #     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
                 # ], p=0.8),
@@ -130,7 +129,7 @@ class CustomDataModule(pl.LightningDataModule):
                 transforms.CenterCrop(224),
                 # transforms.RandomHorizontalFlip(),
                 # transforms.RandomVerticalFlip(),
-                AutoAugment(policy=AutoAugmentPolicy.IMAGENET),
+                transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.IMAGENET),
                 # transforms.RandomApply([
                 #     transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
                 # ], p=0.8),
@@ -177,7 +176,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                 # transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
                 # transforms.RandomHorizontalFlip(),
                 # transforms.RandomVerticalFlip(),
-                AutoAugment(policy=AutoAugmentPolicy.CIFAR10),
+                transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
                 # transforms.RandomApply([
                 #     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
                 # ], p=0.8),
@@ -192,7 +191,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                 transforms.CenterCrop(224),
                 # transforms.RandomHorizontalFlip(),
                 # transforms.RandomVerticalFlip(),
-                AutoAugment(policy=AutoAugmentPolicy.IMAGENET),
+                transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.IMAGENET),
                 # transforms.RandomApply([
                 #     transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
                 # ], p=0.8),
