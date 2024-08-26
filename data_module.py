@@ -114,12 +114,12 @@ class CustomDataModule(pl.LightningDataModule):
                 transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
+                transforms.ToTensor(),
                 normalize,
                 transforms.RandomApply([
                     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
                 ], p=0.8),
-                transforms.RandomGrayscale(p=0.2),
-                transforms.ToTensor()
+                transforms.RandomGrayscale(p=0.2)
             ])
         elif self.dataset == "imagenet":
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
@@ -127,13 +127,13 @@ class CustomDataModule(pl.LightningDataModule):
                 transforms.RandomResizedCrop(224, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
+                transforms.ToTensor(),
                 normalize,
                 transforms.RandomApply([
                     transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
                 ], p=0.8),
                 transforms.RandomGrayscale(p=0.2),
-                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(224 * 0.1)-1, sigma=(0.1, 2.0))], p=0.5),
-                transforms.ToTensor()
+                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(224 * 0.1)-1, sigma=(0.1, 2.0))], p=0.5)
             ])
 
     def setup(self, stage):
