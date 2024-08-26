@@ -100,7 +100,7 @@ class CustomImageNetDataset(Dataset):
 
 
 class CustomDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='data', batch_size=32, dataset="cifar10"):
+    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100"):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -145,24 +145,15 @@ class CustomDataModule(pl.LightningDataModule):
     def setup(self, stage=None, fraction=1.0):
         # Assign train/val datasets for use in dataloaders
         if stage == 'fit' or stage is None:
-            if self.dataset.startswith("cifar"):
-                if self.dataset == "cifar10":
-                    full_dataset = CustomCIFAR10Dataset(self.data_dir, train=True, transform=self.train_transform)
-                elif self.dataset == "cifar100":
-                    full_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
-                train_size = int(len(full_dataset) * fraction)
-                train_indices = torch.randperm(len(full_dataset))[:train_size]
-                train_dataset = Subset(full_dataset, train_indices)
-
-                val_size = int(train_size * 0.1)
-                train_size = train_size - val_size
-
-                self.train_dataset, self.val_dataset = random_split(
-                    train_dataset, [train_size, val_size], generator=torch.Generator()
-                )
+            if self.dataset == "cifar10":
+                self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
+                self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.train_transform)
+            elif self.dataset == "cifar100":
+                self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
+                self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.train_transform)
             elif self.dataset == "imagenet":
                 self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
-                self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.test_transform)
+                self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.train_transform)
 
         if stage == 'test':
             if self.dataset == "cifar10":
@@ -183,12 +174,11 @@ class CustomDataModule(pl.LightningDataModule):
 
 
 class CustomEvaluationDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='./data', batch_size=32, val_split=0.2, dataset="cifar10"):
+    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100"):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
         self.dataset = dataset
-        self.val_split = val_split
 
         # Set the correct normalization for the chosen dataset
         if self.dataset == "cifar10":
@@ -209,31 +199,28 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
         # Split dataset into train, val, and test
         if stage == 'fit' or stage is None:
             if self.dataset == "cifar10":
-                full_dataset = datasets.CIFAR10(self.data_dir, train=True, transform=self.transform)
+                self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.transform)
+                self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.transform)
             elif self.dataset == "cifar100":
-                full_dataset = datasets.CIFAR100(self.data_dir, train=True, transform=self.transform)
+                self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.transform)
+                self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.transform)
             elif self.dataset == "imagenet":
-                full_dataset = datasets.ImageNet(self.data_dir, train=True, transform=self.transform)
-
-            train_size = int((1 - self.val_split) * len(full_dataset))
-            val_size = len(full_dataset) - train_size
-            self.cifar_train, self.cifar_val = random_split(
-                full_dataset, [train_size, val_size], generator=torch.Generator()
-            )
+                self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.transform)
+                self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.transform)
 
         if stage == 'test' or stage is None:
             if self.dataset == "cifar10":
-                full_dataset = datasets.CIFAR10(self.data_dir, train=False, transform=self.transform)
+                self.test_dataset = datasets.CIFAR10(self.data_dir, train=False, transform=self.transform)
             elif self.dataset == "cifar100":
-                full_dataset = datasets.CIFAR100(self.data_dir, train=False, transform=self.transform)
+                self.test_dataset = datasets.CIFAR100(self.data_dir, train=False, transform=self.transform)
             elif self.dataset == "imagenet":
-                full_dataset = datasets.ImageNet(self.data_dir, train=False, transform=self.transform)
+                self.test_dataset = datasets.ImageNet(self.data_dir, train=False, transform=self.transform)
 
     def train_dataloader(self):
-        return DataLoader(self.cifar_train, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=8)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=False, num_workers=8)
 
     def val_dataloader(self):
-        return DataLoader(self.cifar_val, batch_size=self.batch_size, drop_last=True, num_workers=8)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, drop_last=False, num_workers=8)
 
     def test_dataloader(self):
-        return DataLoader(self.cifar_test, batch_size=self.batch_size, num_workers=8)
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, num_workers=8)
