@@ -11,7 +11,6 @@ from LARs import LARS
 import math
 from lightly.utils.scheduler import CosineWarmupScheduler
 
-#TODO: code ImgNet
 class ResNet50_CIFAR(nn.Module):
     def __init__(self):
         super(ResNet50_CIFAR, self).__init__()

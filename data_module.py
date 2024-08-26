@@ -141,7 +141,7 @@ class CustomDataModule(pl.LightningDataModule):
             self.normalize
         ])
 
-    def setup(self):
+    def setup(self, stage):
         if self.dataset == "cifar10":
             self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
             self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.train_transform)
@@ -181,7 +181,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             self.normalize
         ])
 
-    def setup(self):
+    def setup(self, stage):
         if self.dataset == "cifar10":
             self.train_dataset = datasets.CIFAR10(self.data_dir, train=True, transform=self.transform)
             self.val_dataset = datasets.CIFAR10(self.data_dir, train=False, transform=self.transform)

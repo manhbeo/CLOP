@@ -83,7 +83,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, devices, OAR, OAR_only, supe
 
 def extract_data(dataset):
     data_module = CustomDataModule(batch_size=32, dataset=dataset)
-    data_module.setup(stage="fit")
+    data_module.setup()
 
 
 if __name__ == '__main__':
