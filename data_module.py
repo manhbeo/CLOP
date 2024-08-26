@@ -4,6 +4,7 @@ import os
 import pickle
 import pytorch_lightning as pl
 import torch.distributed as dist
+from torchvision.transforms import AutoAugment, AutoAugmentPolicy
 
 #TODO: consider iNaturalist
 class CustomCIFAR10Dataset(Dataset):
@@ -111,29 +112,32 @@ class CustomDataModule(pl.LightningDataModule):
             elif self.dataset == "cifar100":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
             self.transform = transforms.Compose([
-                transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomVerticalFlip(),
+                # transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
+                transforms.RandomResizedCrop(32),
+                # transforms.RandomHorizontalFlip(),
+                # transforms.RandomVerticalFlip(),
+                AutoAugment(policy=AutoAugmentPolicy.CIFAR10),
+                # transforms.RandomApply([
+                #     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
+                # ], p=0.8),
+                # transforms.RandomGrayscale(p=0.2)
                 transforms.ToTensor(),
                 normalize,
-                transforms.RandomApply([
-                    transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
-                ], p=0.8),
-                transforms.RandomGrayscale(p=0.2)
             ])
         elif self.dataset == "imagenet":
-            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             self.transform = transforms.Compose([
-                transforms.RandomResizedCrop(224, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomVerticalFlip(),
+                # transforms.RandomResizedCrop(224, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
+                transforms.RandomResizedCrop(224),
+                # transforms.RandomHorizontalFlip(),
+                # transforms.RandomVerticalFlip(),
+                AutoAugment(policy=AutoAugmentPolicy.IMAGENET),
+                # transforms.RandomApply([
+                #     transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
+                # ], p=0.8),
+                # transforms.RandomGrayscale(p=0.2),
+                # transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(224 * 0.1)-1, sigma=(0.1, 2.0))], p=0.5)
                 transforms.ToTensor(),
-                normalize,
-                transforms.RandomApply([
-                    transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
-                ], p=0.8),
-                transforms.RandomGrayscale(p=0.2),
-                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(224 * 0.1)-1, sigma=(0.1, 2.0))], p=0.5)
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
 
     def setup(self, stage):
@@ -164,36 +168,38 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.dataset = dataset
 
-        # Set the correct normalization for the chosen dataset
         if self.dataset.startswith("cifar"):
             if self.dataset == "cifar10":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
             elif self.dataset == "cifar100":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
             self.transform = transforms.Compose([
-                transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomVerticalFlip(),
+                # transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
+                transforms.RandomResizedCrop(32),
+                # transforms.RandomHorizontalFlip(),
+                # transforms.RandomVerticalFlip(),
+                AutoAugment(policy=AutoAugmentPolicy.CIFAR10),
+                # transforms.RandomApply([
+                #     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
+                # ], p=0.8),
+                # transforms.RandomGrayscale(p=0.2)
                 transforms.ToTensor(),
                 normalize,
-                transforms.RandomApply([
-                    transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
-                ], p=0.8),
-                transforms.RandomGrayscale(p=0.2)
             ])
         elif self.dataset == "imagenet":
-            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             self.transform = transforms.Compose([
-                transforms.RandomResizedCrop(224, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomVerticalFlip(),
+                # transforms.RandomResizedCrop(224, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
+                transforms.RandomResizedCrop(224),
+                # transforms.RandomHorizontalFlip(),
+                # transforms.RandomVerticalFlip(),
+                AutoAugment(policy=AutoAugmentPolicy.IMAGENET),
+                # transforms.RandomApply([
+                #     transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
+                # ], p=0.8),
+                # transforms.RandomGrayscale(p=0.2),
+                # transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(224 * 0.1)-1, sigma=(0.1, 2.0))], p=0.5)
                 transforms.ToTensor(),
-                normalize,
-                transforms.RandomApply([
-                    transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
-                ], p=0.8),
-                transforms.RandomGrayscale(p=0.2),
-                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(224 * 0.1)-1, sigma=(0.1, 2.0))], p=0.5)
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ])
 
     def setup(self, stage):
