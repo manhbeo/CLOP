@@ -16,10 +16,7 @@ class CustomCIFAR10Dataset(Dataset):
         self.fine_labels = self.data['labels']
 
     def __getitem__(self, index):
-        # Get an image and its fine label
         img, fine_label = self.dataset[index]
-
-        # Transform the image if a transform is provided
         if self.transform is not None:
             img1 = self.transform(img)
             img2 = self.transform(img)
@@ -41,10 +38,7 @@ class CustomCIFAR100Dataset(Dataset):
             self.data = pickle.load(f, encoding='latin1')
 
     def __getitem__(self, index):
-        # Get an image and its fine label
         img, fine_label = self.dataset[index]
-
-        # Transform the image if a transform is provided
         if self.transform is not None:
             img1 = self.transform(img)
             img2 = self.transform(img)
