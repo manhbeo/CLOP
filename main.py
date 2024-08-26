@@ -16,7 +16,6 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train")
 
-    #Save the model after each 1 epoch
     #next use iNaturalist
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -42,7 +41,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
     trainer.save_checkpoint(f'final-{dataset}-{batch_size*devices}-oar:{OAR}-only:{OAR_only}-sup:{supervised}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset):
+def eval(pretrain_dir, batch_size, epochs, dataset, devices, OAR, OAR_only, supervised):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval")
@@ -64,7 +63,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
         monitor='val_loss',
         mode="min",
         dirpath='',
-        filename='{model}-{epoch:04d}',
+        filename='linear_eval-{epoch:04d}',
         save_weights_only=True,
         every_n_epochs=1,
         verbose=True
@@ -80,6 +79,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
                         callbacks=[checkpoint_callback],
                         deterministic=True)
     trainer.fit(linear_classifier, datamodule=data_module)
+    trainer.save_checkpoint(f'linear_eval-{dataset}-{batch_size*devices}-oar:{OAR}-only:{OAR_only}-sup:{supervised}.ckpt')
 
 
 def test(pretrain_dir, pretrain_linear_classifier_dir, batch_size, dataset):
@@ -139,7 +139,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.devices, args.OAR, args.OAR_only, args.supervised)
     elif args.test:
         test(args.pretrain_dir, args.pretrain_linear_classifier_dir, args.batch_size, args.dataset)
     elif args.extract_data:
