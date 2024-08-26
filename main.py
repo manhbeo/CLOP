@@ -37,10 +37,10 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
                         deterministic=True)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'{dataset}-{batch_size*devices}-oar:{OAR}.ckpt')
+    trainer.save_checkpoint(f'{dataset}-{batch_size*devices}-oar:{OAR}-only:{OAR_only}-sup:{supervised}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset, OAR):
+def eval(pretrain_dir, batch_size, epochs, dataset, devices, OAR, OAR_only, supervised):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval")
@@ -78,7 +78,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, OAR):
                         callbacks=[checkpoint_callback],
                         deterministic=True)
     trainer.fit(linear_classifier, datamodule=data_module)
-    trainer.save_checkpoint(f'linear_eval-{dataset}-oar:{OAR}.ckpt')
+    trainer.save_checkpoint(f'linear_eval-{dataset}-oar:{OAR}-only:{OAR_only}-sup:{supervised}.ckpt')
 
 
 def extract_data(dataset):
