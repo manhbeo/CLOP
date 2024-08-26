@@ -116,7 +116,7 @@ class CustomDataModule(pl.LightningDataModule):
                 transforms.RandomVerticalFlip(),
                 normalize,
                 transforms.RandomApply([
-                    transforms.ColorJitter(0.4, 0.4, 0.4, 0.4)
+                    transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
                 ], p=0.8),
                 transforms.RandomGrayscale(p=0.2),
                 transforms.ToTensor()
@@ -129,7 +129,7 @@ class CustomDataModule(pl.LightningDataModule):
                 transforms.RandomVerticalFlip(),
                 normalize,
                 transforms.RandomApply([
-                    transforms.ColorJitter(0.8, 0.8, 0.8, 0.8)
+                    transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
                 ], p=0.8),
                 transforms.RandomGrayscale(p=0.2),
                 transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(224 * 0.1), sigma=(0.1, 2.0))], p=0.5),
