@@ -104,42 +104,37 @@ class CustomDataModule(pl.LightningDataModule):
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
         self.dataset = dataset
-        self.normalize = None
 
         if self.dataset.startswith("cifar"):
             if self.dataset == "cifar10":
-                self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
+                normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
             elif self.dataset == "cifar100":
-                self.normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
+                normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(32, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
                 transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                normalize,
                 transforms.RandomApply([
-                    transforms.ColorJitter(0.5, 0.5, 0.5, 0.1)
+                    transforms.ColorJitter(0.4, 0.4, 0.4, 0.4)
                 ], p=0.8),
                 transforms.RandomGrayscale(p=0.2),
-                transforms.ToTensor(),
-                self.normalize
+                transforms.ToTensor()
             ])
         elif self.dataset == "imagenet":
-            self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(224, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
                 transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                normalize,
                 transforms.RandomApply([
-                    transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
+                    transforms.ColorJitter(0.8, 0.8, 0.8, 0.8)
                 ], p=0.8),
                 transforms.RandomGrayscale(p=0.2),
-                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(32 * 0.1), sigma=(0.1, 2.0))], p=0.5),
-                transforms.ToTensor(),
-                self.normalize
+                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(224 * 0.1), sigma=(0.1, 2.0))], p=0.5),
+                transforms.ToTensor()
             ])
-        self.test_transform = transforms.Compose([
-            transforms.Resize(32 if dataset.startswith("cifar") else 256),
-            transforms.CenterCrop(32 if dataset.startswith("cifar") else 224),
-            transforms.ToTensor(),
-            self.normalize
-        ])
 
     def setup(self, stage):
         if self.dataset == "cifar10":
@@ -171,17 +166,17 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
 
         # Set the correct normalization for the chosen dataset
         if self.dataset == "cifar10":
-            self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
+            normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
         elif self.dataset == "cifar100":
-            self.normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
+            normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
         elif self.dataset == "imagenet":
-            self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
         self.transform = transforms.Compose([
             transforms.Resize(32 if dataset.startswith("cifar") else 256),
             transforms.CenterCrop(32 if dataset.startswith("cifar") else 224),
             transforms.ToTensor(),
-            self.normalize
+            normalize
         ])
 
     def setup(self, stage):

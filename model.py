@@ -37,11 +37,7 @@ class ResNet50(nn.Module):
 class CLOA(pl.LightningModule):
     def __init__(self, batch_size=128, dataset="cifar100", OAR=True, OAR_only=False, supervised=False, devices=1):
         super(CLOA, self).__init__()
-
-        self.num_classes = 0
-        self.output_dim = 128
         self.dataset = dataset
-        temperature = 0.1
 
         if dataset.startswith("cifar"):
             self.encoder = ResNet50_CIFAR()
@@ -52,15 +48,13 @@ class CLOA(pl.LightningModule):
                 temperature = 0.2
                 self.num_classes = 100
             self.output_dim = 128
-            
-        
         elif dataset == "imagenet":
+            temperature = 0.1
             self.encoder = ResNet50()
             self.num_classes = 1000
             self.output_dim = 1024
 
         self.supervised = supervised
-        self.OAR = None
         self.OAR_only = OAR_only
         if not self.supervised:
             self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
