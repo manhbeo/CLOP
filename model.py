@@ -134,15 +134,19 @@ class CLOA(pl.LightningModule):
         knn_acc = correct / x_i.size(0)
         self.log(f'val_acc-k={k}', knn_acc, batch_size=x_i.size(0), sync_dist=True)
 
+        loss = self.shared_step(batch)
+        self.log('val_loss', loss, sync_dist=True)
+        return loss
+
+    def test_step(self, batch, batch_idx):
+        (x_i, _), _ = batch
+        z_i = self.forward(x_i)
+
         # Calculate embedding variance
         z_i_normalized = nn.functional.normalize(z_i, p=2, dim=1)
         embedding_mean = z_i_normalized.mean(dim=0)
         embedding_variance = ((z_i_normalized - embedding_mean) ** 2).mean().item()
-        self.log('val_embedding_variance', embedding_variance, batch_size=z_i.size(0), sync_dist=True)
-
-        loss = self.shared_step(batch)
-        self.log('val_loss', loss, sync_dist=True)
-        return loss
+        self.log('test_embedding_variance', embedding_variance, batch_size=z_i.size(0), sync_dist=True)
 
     
     def configure_optimizers(self):

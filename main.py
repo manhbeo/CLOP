@@ -85,11 +85,25 @@ def extract_data(dataset):
     data_module = CustomDataModule(batch_size=32, dataset=dataset)
     data_module.setup()
 
+def test(pretrain_dir, dataset):
+    model = CLOA.load_from_checkpoint(pretrain_dir)
+    data_module = CustomEvaluationDataModule(batch_size=128, dataset=dataset)
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_test")
+
+    trainer = pl.Trainer(logger=wandb_logger,
+                        devices="auto",
+                        accelerator="gpu",
+                        sync_batchnorm=True,
+                        use_distributed_sampler=True,
+                        deterministic=True)
+    trainer.test(model, data_module)
+
 
 if __name__ == '__main__':
     seed_everything(1234) 
     parser = argparse.ArgumentParser()
     parser.add_argument("--eval", action='store_true')
+    parser.add_argument("--test", action='store_true')
     parser.add_argument("--epochs", type=int)
     parser.add_argument("--pretrain_dir", type=str)
     parser.add_argument("--pretrain_linear_classifier_dir", type=str)
@@ -106,5 +120,7 @@ if __name__ == '__main__':
         eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.devices, args.OAR, args.OAR_only, args.supervised)
     elif args.extract_data:
         extract_data(args.dataset)
+    elif args.test:
+        test(args.pretrain_dir, args.dataset)
     else:
         train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.OAR_only, args.supervised, args.devices)
