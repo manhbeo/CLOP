@@ -126,7 +126,7 @@ class CLOA(pl.LightningModule):
         pred_labels = knn_predict(z_i, self.feature_bank, self.feature_labels, classes=self.num_classes, knn_k=k, knn_t=0.1)
         correct = (pred_labels == fine_label).sum().item()
         knn_acc = correct / x_i.size(0)
-        self.log(f'val_acc-k={k}', knn_acc, batch_size=x_i.size(0), sync_dist=True)
+        self.log(f'knn_acc-k={k}', knn_acc, batch_size=x_i.size(0), sync_dist=True)
 
         loss = self.shared_step(batch)
         self.log('val_loss', loss, sync_dist=True)
