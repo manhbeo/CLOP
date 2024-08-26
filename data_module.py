@@ -107,8 +107,6 @@ class CustomDataModule(pl.LightningDataModule):
         self.dataset = dataset
         self.normalize = None
 
-        # Set the correct normalization for the chosen dataset
-        #TODO: fix this
         if self.dataset.startswith("cifar"):
             if self.dataset == "cifar10":
                 self.normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
@@ -211,11 +209,11 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
         # Split dataset into train, val, and test
         if stage == 'fit' or stage is None:
             if self.dataset == "cifar10":
-                full_dataset = CustomCIFAR10Dataset(self.data_dir, train=True, transform=self.transform)
+                full_dataset = datasets.CIFAR10(self.data_dir, train=True, transform=self.transform)
             elif self.dataset == "cifar100":
-                full_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.transform)
+                full_dataset = datasets.CIFAR100(self.data_dir, train=True, transform=self.transform)
             elif self.dataset == "imagenet":
-                full_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.transform)
+                full_dataset = datasets.ImageNet(self.data_dir, train=True, transform=self.transform)
 
             train_size = int((1 - self.val_split) * len(full_dataset))
             val_size = len(full_dataset) - train_size
@@ -225,11 +223,11 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
 
         if stage == 'test' or stage is None:
             if self.dataset == "cifar10":
-                self.test_dataset = CustomCIFAR10Dataset(self.data_dir, train=False, transform=self.transform)
+                full_dataset = datasets.CIFAR10(self.data_dir, train=False, transform=self.transform)
             elif self.dataset == "cifar100":
-                self.test_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.transform)
+                full_dataset = datasets.CIFAR100(self.data_dir, train=False, transform=self.transform)
             elif self.dataset == "imagenet":
-                self.test_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.transform)
+                full_dataset = datasets.ImageNet(self.data_dir, train=False, transform=self.transform)
 
     def train_dataloader(self):
         return DataLoader(self.cifar_train, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=8)
