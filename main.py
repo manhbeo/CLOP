@@ -106,7 +106,6 @@ if __name__ == '__main__':
     parser.add_argument("--test", action='store_true')
     parser.add_argument("--epochs", type=int)
     parser.add_argument("--pretrain_dir", type=str)
-    parser.add_argument("--pretrain_linear_classifier_dir", type=str)
     parser.add_argument("--batch_size", type=int)
     parser.add_argument("--devices", type=int, default=1)
     parser.add_argument("--dataset", type=str)
@@ -123,4 +122,4 @@ if __name__ == '__main__':
     elif args.test:
         test(args.pretrain_dir, args.dataset)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.OAR_only, args.supervised, args.devices)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.OAR_only)
