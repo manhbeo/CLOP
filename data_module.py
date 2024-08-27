@@ -93,12 +93,11 @@ class CustomImageNetDataset(Dataset):
 
 
 class CustomDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=20):
+    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100"):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
         self.dataset = dataset
-        self.num_workers = num_workers
 
         if self.dataset.startswith("cifar"):
             if self.dataset == "cifar10":
