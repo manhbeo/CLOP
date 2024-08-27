@@ -56,6 +56,7 @@ class CLOA(pl.LightningModule):
 
         self.supervised = supervised
         self.OAR_only = OAR_only
+        self.OAR = None
         if not self.supervised:
             self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
         elif self.supervised:
