@@ -69,7 +69,8 @@ class CLOA(pl.LightningModule):
 
         self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
 
-        self.learning_rate = 0.075 * math.sqrt(batch_size*devices)
+        # self.learning_rate = 0.075 * math.sqrt(batch_size*devices)
+        self.learning_rate = 0.3 * batch_size * devices / 256
         self.feature_bank_size = 1024
         self._init_feature_bank(self.feature_bank_size)
     
