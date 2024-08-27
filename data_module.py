@@ -175,7 +175,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             elif self.dataset == "cifar100":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
+                transforms.RandomResizedCrop(32),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
                 # transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
