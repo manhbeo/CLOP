@@ -152,7 +152,7 @@ class CustomDataModule(pl.LightningDataModule):
         return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=9)
     
     def test_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=8)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=9)
 
 
 class CustomEvaluationDataModule(pl.LightningDataModule):
