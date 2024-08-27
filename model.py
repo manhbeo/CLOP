@@ -148,7 +148,7 @@ class CLOA(pl.LightningModule):
         optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
         self.scheduler = CosineWarmupScheduler(
                 optimizer=optimizer,
-                warmup_epochs=10,
+                warmup_epochs=0,
                 max_epochs=int(self.trainer.estimated_stepping_batches),
             )
 
