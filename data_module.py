@@ -117,7 +117,7 @@ class CustomDataModule(pl.LightningDataModule):
                 normalize,
             ])
         elif self.dataset == "imagenet":
-            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             self.transform = transforms.Compose([
                 # transforms.RandomResizedCrop(224, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
                 transforms.Resize(256),  # Resize the shorter side to 256
