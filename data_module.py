@@ -166,7 +166,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                 normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
             elif self.dataset == "cifar100":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
-            self.transform = transforms.Compose([
+            self.train_transform = transforms.Compose([
                 # transforms.RandomResizedCrop(32, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
                 # transforms.RandomHorizontalFlip(),
                 # transforms.RandomVerticalFlip(),
@@ -179,7 +179,8 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                 normalize,
             ])
         elif self.dataset == "imagenet":
-            self.transform = transforms.Compose([
+            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            self.train_transform = transforms.Compose([
                 # transforms.RandomResizedCrop(224, scale=(0.08, 1.0), ratio=(3/4, 4/3)),
                 transforms.Resize(256),  # Resize the shorter side to 256
                 transforms.CenterCrop(224),
@@ -192,22 +193,41 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                 # transforms.RandomGrayscale(p=0.2),
                 # transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(224 * 0.1)-1, sigma=(0.1, 2.0))], p=0.5)
                 transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                normalize
             ])
 
+        self.test_transform = transforms.Compose([
+            transforms.Resize(32 if self.dataset.startswith("cifar") else 256),
+            transforms.CenterCrop(32 if self.dataset.startswith("cifar") else 224),
+            transforms.ToTensor(),
+            normalize
+        ])
+
     def setup(self, stage):
-        if self.dataset == "cifar10":
-            self.train_dataset = datasets.CIFAR10(self.data_dir, train=True, transform=self.transform)
-            self.val_dataset = datasets.CIFAR10(self.data_dir, train=False, transform=self.transform)
-        elif self.dataset == "cifar100":
-            self.train_dataset = datasets.CIFAR100(self.data_dir, train=True, transform=self.transform)
-            self.val_dataset = datasets.CIFAR100(self.data_dir, train=False, transform=self.transform)
-        elif self.dataset == "imagenet":
-            self.train_dataset = datasets.ImageNet(self.data_dir, split='train', transform=self.transform)
-            self.val_dataset =  datasets.ImageNet(self.data_dir, split='val', transform=self.transform)
+        if stage == "fit": 
+            if self.dataset == "cifar10":
+                self.train_dataset = datasets.CIFAR10(self.data_dir, train=True, transform=self.train_transform)
+                self.val_dataset = datasets.CIFAR10(self.data_dir, train=False, transform=self.train_transform)
+            elif self.dataset == "cifar100":
+                self.train_dataset = datasets.CIFAR100(self.data_dir, train=True, transform=self.train_transform)
+                self.val_dataset = datasets.CIFAR100(self.data_dir, train=False, transform=self.train_transform)
+            elif self.dataset == "imagenet":
+                self.train_dataset = datasets.ImageNet(self.data_dir, split='train', transform=self.train_transform)
+                self.val_dataset =  datasets.ImageNet(self.data_dir, split='val', transform=self.train_transform)
+
+        elif stage == "test":
+            if self.dataset == "cifar10":
+                self.test_dataset = datasets.CIFAR10(self.data_dir, train=False, transform=self.test_transform)
+            elif self.dataset == "cifar100":
+                self.test_dataset = datasets.CIFAR100(self.data_dir, train=False, transform=self.test_transform)
+            elif self.dataset == "imagenet":
+                self.test_dataset =  datasets.ImageNet(self.data_dir, split='val', transform=self.test_transform)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=8)
 
     def val_dataloader(self):
         return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=8)
+    
+    def test_dataloader(self):
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, num_workers=8)
