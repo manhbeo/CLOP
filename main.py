@@ -16,7 +16,6 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}-only:{OAR_only}')
 
-    os.chdir("../")
     #next use iNaturalist
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -60,7 +59,6 @@ def eval(pretrain_dir, batch_size, epochs, dataset, OAR, OAR_only, num_workers):
         model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True,
     )
 
-    os.chdir("../")
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
         mode="min",
