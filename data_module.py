@@ -148,7 +148,6 @@ class CustomDataModule(pl.LightningDataModule):
             self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
             self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.val_transform)
         elif self.dataset == "imagenet":
-            print("Dataset is ImageNet")
             self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
             self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.val_transform)
 
