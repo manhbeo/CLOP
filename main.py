@@ -6,13 +6,13 @@ import argparse
 from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=False, supervised=False, devices=1):
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=False, supervised=False, devices=1, num_workers=9):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
         model = CLOA(batch_size, dataset, OAR, OAR_only, supervised, devices)
     
-    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset)
+    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}-only:{OAR_only}')
 
     #next use iNaturalist
@@ -40,9 +40,9 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
     trainer.save_checkpoint(f'{dataset}-{batch_size*devices}-oar:{OAR}-only:{OAR_only}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset, OAR, OAR_only):
+def eval(pretrain_dir, batch_size, epochs, dataset, OAR, OAR_only, num_workers):
     model = CLOA.load_from_checkpoint(pretrain_dir)
-    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset)
+    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-oar:{OAR}-only:{OAR_only}')
     if dataset == "cifar10": 
         num_classes = 10
@@ -95,6 +95,7 @@ if __name__ == '__main__':
     parser.add_argument("--pretrain_dir", type=str)
     parser.add_argument("--batch_size", type=int)
     parser.add_argument("--devices", type=int, default=1)
+    parser.add_argument("--num_workers", type=int, default=9)
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--OAR", action='store_true')
     parser.add_argument("--OAR_only", action='store_true')
@@ -103,8 +104,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.OAR, args.OAR_only)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.OAR, args.OAR_only, args.num_workers)
     elif args.extract_data:
         extract_data(args.dataset)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.OAR_only, args.supervised, args.devices)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, 
+              args.OAR, args.OAR_only, args.supervised, args.devices, args.num_workers)
