@@ -83,7 +83,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, OAR, OAR_only):
 
 def extract_data(dataset):
     data_module = CustomDataModule(batch_size=32, dataset=dataset)
-    data_module.setup()
+    data_module.setup(stage="fit")
 
 def test(pretrain_dir, dataset):
     model = CLOA.load_from_checkpoint(pretrain_dir)
