@@ -86,9 +86,11 @@ def extract_data(dataset):
     data_module = CustomDataModule(batch_size=32, dataset=dataset)
     data_module.setup(stage="fit")
 
-def test(pretrain_dir, dataset, batch_size, pretrain_linear_classifier):
+
+def test(pretrain_dir, dataset, batch_size, pretrain_linear_classifier, OAR, OAR_only):
     data_module = CustomEvaluationDataModule(batch_size=batch_size)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Test")
+    data_module.setup(stage="test")
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Test", name=f'linear_eval-{dataset}-oar:{OAR}-only:{OAR_only}')
     if dataset == "cifar10": 
         num_classes = 10
         feature_dim = 128
@@ -136,6 +138,6 @@ if __name__ == '__main__':
     elif args.extract_data:
         extract_data(args.dataset)
     elif args.test:
-        test(args.pretrain_dir, args.dataset, args.batch_size, args.pretrain_linear_classifier)
+        test(args.pretrain_dir, args.dataset, args.batch_size, args.pretrain_linear_classifier, args.OAR, args.OAR_only)
     else:
         train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.OAR_only, args.supervised, args.devices)
