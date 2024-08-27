@@ -1,6 +1,5 @@
 from model import CLOA
 from data_module import CustomDataModule, CustomEvaluationDataModule
-from pytorch_lightning.callbacks import ModelCheckpoint
 import pytorch_lightning as pl
 import argparse
 from pytorch_lightning import seed_everything
