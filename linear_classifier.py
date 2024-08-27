@@ -135,8 +135,7 @@ class LinearClassifier(LightningModule):
         if not self.freeze_model:
             parameters += self.model.parameters()
         optimizer = LARS(self.parameters(), 
-                         lr=0.1 * self.batch_size_per_device * self.trainer.world_size / 256, 
-                         weight_decay=1e-6)
+                         lr=0.1 * self.batch_size_per_device * self.trainer.world_size / 256)
         # optimizer = SGD(
         #     parameters,
         #     lr=0.1 * self.batch_size_per_device * self.trainer.world_size / 256,
