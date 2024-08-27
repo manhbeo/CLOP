@@ -134,23 +134,16 @@ class CustomDataModule(pl.LightningDataModule):
                 normalize
             ])
 
-        self.val_transform = transforms.Compose([
-            transforms.Resize(32 if self.dataset.startswith("cifar") else 256),
-            transforms.CenterCrop(32 if self.dataset.startswith("cifar") else 224),
-            transforms.ToTensor(),
-            normalize
-        ])
-
     def setup(self, stage):
         if self.dataset == "cifar10":
             self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.transform)
-            self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.val_transform)
+            self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.transform)
         elif self.dataset == "cifar100":
             self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.transform)
-            self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.val_transform)
+            self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.transform)
         elif self.dataset == "imagenet":
             self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.transform)
-            self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.val_transform)
+            self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.transform)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=20)
