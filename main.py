@@ -16,16 +16,6 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}')
 
     #next use iNaturalist
-    checkpoint_callback = ModelCheckpoint(
-        monitor='val_loss',
-        mode="min",
-        dirpath='',
-        filename='{epoch:03d}',
-        save_weights_only=True,
-        every_n_epochs=1,
-        verbose=True
-    )
-
     trainer = pl.Trainer(logger=wandb_logger,
                         max_epochs=epochs,
                         devices="auto",
@@ -33,7 +23,6 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
                         strategy="ddp",
                         sync_batchnorm=True,
                         use_distributed_sampler=True,
-                        callbacks=[checkpoint_callback],
                         deterministic=True)
 
     trainer.fit(model, data_module)
@@ -55,17 +44,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, OAR, OAR_only):
         feature_dim = 1024
 
     linear_classifier = LinearClassifier(
-        model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True,
-    )
-
-    checkpoint_callback = ModelCheckpoint(
-        monitor='val_loss',
-        mode="min",
-        dirpath='',
-        filename='linear_eval-{epoch:04d}',
-        save_weights_only=True,
-        every_n_epochs=1,
-        verbose=True
+        model, batch_size, feature_dim=feature_dim, num_classes=num_classes, freeze_model=True,
     )
 
     trainer = pl.Trainer(logger=wandb_logger,
@@ -75,7 +54,6 @@ def eval(pretrain_dir, batch_size, epochs, dataset, OAR, OAR_only):
                         strategy="ddp_find_unused_parameters_true",
                         sync_batchnorm=True,
                         use_distributed_sampler=True,
-                        callbacks=[checkpoint_callback],
                         deterministic=True)
     trainer.fit(linear_classifier, datamodule=data_module)
     trainer.save_checkpoint(f'linear_eval-{dataset}-oar:{OAR}-only:{OAR_only}.ckpt')

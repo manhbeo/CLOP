@@ -28,7 +28,6 @@ class Supervised_NTXentLoss(nn.Module):
         # Use the gathered data for further processing
         out0, out1, labels = out0_large, out1_large, labels_large
 
-
         # Compute the cosine similarity matrix
         logits = torch.matmul(out0, out1.T) / self.temperature
         logits_exp = torch.exp(logits)
@@ -39,4 +38,5 @@ class Supervised_NTXentLoss(nn.Module):
         # Calculate the sum of the exponentiated logits for all samples (the denominator in the softmax)
         all_logits_sum = logits_exp.sum(dim=1, keepdim=True)
         sup_contrastive_loss = -torch.log(positive_logits.sum(dim=1) / all_logits_sum.squeeze()).mean()
+        
         return sup_contrastive_loss
