@@ -146,13 +146,13 @@ class CustomDataModule(pl.LightningDataModule):
             self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.transform)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=16)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=12)
 
     def val_dataloader(self):
         return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=8)
     
     def test_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=20)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=8)
 
 
 class CustomEvaluationDataModule(pl.LightningDataModule):
