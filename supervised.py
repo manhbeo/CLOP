@@ -13,7 +13,7 @@ class Supervised_NTXentLoss(nn.Module):
         out0 = F.normalize(out0, dim=1)
         out1 = F.normalize(out1, dim=1)
 
-        if self.use_distributed and dist.world_size() > 1:
+        if self.use_distributed:
             # Gather hidden representations from other processes
             out0_large = torch.cat(dist.gather(out0), 0)
             out1_large = torch.cat(dist.gather(out1), 0)
