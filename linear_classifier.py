@@ -137,12 +137,6 @@ class LinearClassifier(LightningModule):
         optimizer = LARS(self.parameters(), 
                          lr=0.2 * self.batch_size_per_device * self.trainer.world_size / 256,
                          weight_decay=1-6)
-        # optimizer = SGD(
-        #     parameters,
-        #     lr=0.1 * self.batch_size_per_device * self.trainer.world_size / 256,
-        #     momentum=0.9,
-        #     weight_decay=0.0,
-        # )
         scheduler = {
             "scheduler": CosineWarmupScheduler(
                 optimizer=optimizer,
@@ -151,10 +145,6 @@ class LinearClassifier(LightningModule):
             ),
             "interval": "step",
         }
-        # scheduler = {
-        #     "scheduler": torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99),
-        #     "interval": "step",
-        # }
         return [optimizer], [scheduler]
 
     def on_train_epoch_start(self) -> None:
