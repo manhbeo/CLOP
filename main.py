@@ -16,7 +16,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, 
                                    num_workers=num_workers, OAR_only=OAR_only, scale_start=scale_start)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}-only:{OAR_only}-scale:{scale_start}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}-scale:{scale_start}')
 
     #next use iNaturalist
     checkpoint_callback = ModelCheckpoint(
@@ -40,14 +40,14 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
                         deterministic=True)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'{dataset}-{batch_size*devices}-oar:{OAR}-only:{OAR_only}-scale:{scale_start}.ckpt')
+    trainer.save_checkpoint(f'{dataset}-{batch_size*devices}-oar:{OAR}-scale:{scale_start}.ckpt')
 
 
 def eval(pretrain_dir, batch_size, epochs, dataset, OAR, OAR_only, num_workers, scale_start):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, 
                                              num_workers=num_workers, OAR_only=OAR_only, OAR=OAR, scale_start=scale_start)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-oar:{OAR}-only:{OAR_only}-scale:{scale_start}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-oar:{OAR}-scale:{scale_start}')
     if dataset == "cifar10": 
         num_classes = 10
         feature_dim = 128
@@ -82,7 +82,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, OAR, OAR_only, num_workers, 
                         callbacks=[checkpoint_callback],
                         deterministic=True)
     trainer.fit(linear_classifier, datamodule=data_module)
-    trainer.save_checkpoint(f'linear_eval-{dataset}-oar:{OAR}-only:{OAR_only}-scale:{scale_start}.ckpt')
+    trainer.save_checkpoint(f'linear_eval-{dataset}-oar:{OAR}-scale:{scale_start}.ckpt')
 
 
 def extract_data(dataset):
@@ -103,7 +103,6 @@ if __name__ == '__main__':
     parser.add_argument("--scale_start", type=float, default=0.08)
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--OAR", action='store_true')
-    parser.add_argument("--OAR_only", action='store_true')
     parser.add_argument("--supervised", action='store_true')
     parser.add_argument("--extract_data", action='store_true')
     args = parser.parse_args()
