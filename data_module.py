@@ -93,7 +93,7 @@ class CustomImageNetDataset(Dataset):
 
 
 class CustomDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9):
+    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9, OAR_only=False):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -140,6 +140,7 @@ class CustomDataModule(pl.LightningDataModule):
             transforms.ToTensor(),
             normalize
         ])
+        if OAR_only: self.train_transform = self.val_transform
 
     def setup(self, stage):
         if self.dataset == "cifar10":

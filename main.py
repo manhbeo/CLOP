@@ -13,7 +13,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
     else: 
         model = CLOA(batch_size, dataset, OAR, OAR_only, supervised, devices)
     
-    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
+    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, OAR_only=OAR_only)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}-only:{OAR_only}')
 
     #next use iNaturalist
