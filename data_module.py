@@ -113,6 +113,7 @@ class CustomDataModule(pl.LightningDataModule):
                     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
                 ], p=0.8),
                 transforms.RandomGrayscale(p=0.2),
+                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(32 * 0.1), sigma=(0.1, 2.0))], p=0.5),
                 transforms.ToTensor(),
                 normalize,
             ])
@@ -182,6 +183,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
                 ], p=0.8),
                 transforms.RandomGrayscale(p=0.2),
+                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(32 * 0.1), sigma=(0.1, 2.0))], p=0.5),
                 transforms.ToTensor(),
                 normalize,
             ])
