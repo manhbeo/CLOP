@@ -82,7 +82,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, OAR, OAR_only, num_workers, 
                         callbacks=[checkpoint_callback],
                         deterministic=True)
     trainer.fit(linear_classifier, datamodule=data_module)
-    trainer.save_checkpoint(f'linear_eval-{dataset}-oar:{OAR}-only:{OAR_only}.ckpt')
+    trainer.save_checkpoint(f'linear_eval-{dataset}-oar:{OAR}-only:{OAR_only}-scale{scale_start}.ckpt')
 
 
 def extract_data(dataset):
