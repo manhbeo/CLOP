@@ -35,7 +35,7 @@ class ResNet50(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, batch_size=128, dataset="cifar100", OAR=True, OAR_only=False, supervised=False, devices=1):
+    def __init__(self, batch_size=128, dataset="cifar100", OAR=True, supervised=False, devices=1):
         super(CLOA, self).__init__()
         self.dataset = dataset
 
@@ -55,17 +55,13 @@ class CLOA(pl.LightningModule):
             self.output_dim = 1024
 
         self.supervised = supervised
-        self.OAR_only = OAR_only
         self.OAR = None
         if not self.supervised:
             self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
         elif self.supervised:
             self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
 
-        if OAR_only: 
-            self.criterion = OARLoss(self.num_classes, embedding_dim=self.output_dim)
-            self.OAR_only = OAR_only
-        elif OAR:
+        if OAR:
             self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim)
 
         self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
@@ -103,8 +99,6 @@ class CLOA(pl.LightningModule):
 
         if self.supervised: 
             loss = self.criterion(z_i, z_j, fine_label)
-        elif self.OAR_only:
-            loss = self.criterion(z_i, fine_label)
         else:    
             loss = self.criterion(z_i, z_j)
         if self.OAR != None: 
