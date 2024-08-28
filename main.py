@@ -7,15 +7,15 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import os
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=False, 
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, 
           supervised=False, devices=1, num_workers=9, scale_start=0.08):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOA(batch_size, dataset, OAR, OAR_only, supervised, devices)
+        model = CLOA(batch_size, dataset, OAR, supervised, devices)
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, 
-                                   num_workers=num_workers, OAR_only=OAR_only, scale_start=scale_start)
+                                   num_workers=num_workers, scale_start=scale_start)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}-scale:{scale_start}')
 
     #next use iNaturalist
@@ -43,10 +43,10 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
     trainer.save_checkpoint(f'{dataset}-{batch_size*devices}-oar:{OAR}-scale:{scale_start}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset, OAR, OAR_only, num_workers, scale_start):
+def eval(pretrain_dir, batch_size, epochs, dataset, OAR, num_workers, scale_start):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, 
-                                             num_workers=num_workers, OAR_only=OAR_only, OAR=OAR, scale_start=scale_start)
+                                             num_workers=num_workers, OAR=OAR, scale_start=scale_start)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-oar:{OAR}-scale:{scale_start}')
     if dataset == "cifar10": 
         num_classes = 10
