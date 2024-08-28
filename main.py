@@ -43,7 +43,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, OAR_only=F
 
 def eval(pretrain_dir, batch_size, epochs, dataset, OAR, OAR_only, num_workers):
     model = CLOA.load_from_checkpoint(pretrain_dir)
-    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, OAR_only=OAR_only)
+    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, OAR_only=OAR_only, OAR=OAR)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-oar:{OAR}-only:{OAR_only}')
     if dataset == "cifar10": 
         num_classes = 10
