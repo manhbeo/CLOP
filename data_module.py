@@ -164,7 +164,7 @@ class CustomDataModule(pl.LightningDataModule):
 
 
 class CustomEvaluationDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100", num_workers=9, OAR_only=False):
+    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100", num_workers=9, OAR_only=False, OAR=False):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -211,7 +211,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             transforms.ToTensor(),
             normalize
         ])
-        if OAR_only: self.train_transform = self.val_transform
+        if OAR_only or OAR: self.train_transform = self.val_transform
 
     def setup(self, stage):
         if self.dataset == "cifar10":
