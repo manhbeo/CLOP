@@ -120,7 +120,7 @@ class CustomDataModule(pl.LightningDataModule):
         elif self.dataset == "imagenet":
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(224),
+                transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
                 # transforms.Resize(256),  # Resize the shorter side to 256
                 # transforms.CenterCrop(224),
                 transforms.RandomHorizontalFlip(),
@@ -190,7 +190,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
         elif self.dataset == "imagenet":
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(224),
+                transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
                 # transforms.Resize(256),
                 # transforms.CenterCrop(224),
                 transforms.RandomHorizontalFlip(),
