@@ -110,7 +110,7 @@ class CustomDataModule(pl.LightningDataModule):
                 transforms.RandomHorizontalFlip(),
                 # transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
                 transforms.RandomApply([
-                    transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
+                    transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
                 ], p=0.8),
                 transforms.RandomGrayscale(p=0.2),
                 transforms.ToTensor(),
