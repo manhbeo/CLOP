@@ -93,7 +93,7 @@ class CustomImageNetDataset(Dataset):
 
 
 class CustomDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9, OAR_only=False):
+    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9, OAR_only=False, scale_start=0.08):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -106,7 +106,7 @@ class CustomDataModule(pl.LightningDataModule):
             elif self.dataset == "cifar100":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(32, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(32, scale=(scale_start, 1.0)),
                 transforms.RandomHorizontalFlip(),
                 # transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
                 transforms.RandomApply([
@@ -120,7 +120,7 @@ class CustomDataModule(pl.LightningDataModule):
         elif self.dataset == "imagenet":
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(224, scale=(scale_start, 1.0)),
                 # transforms.Resize(256),
                 # transforms.CenterCrop(224),
                 transforms.RandomHorizontalFlip(),
@@ -164,7 +164,7 @@ class CustomDataModule(pl.LightningDataModule):
 
 
 class CustomEvaluationDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100", num_workers=9, OAR_only=False, OAR=False):
+    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100", num_workers=9, OAR_only=False, OAR=False, scale_start=0.08):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -177,7 +177,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             elif self.dataset == "cifar100":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(32, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(32, scale=(scale_start, 1.0)),
                 transforms.RandomHorizontalFlip(),
                 # transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
                 transforms.RandomApply([
@@ -191,7 +191,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
         elif self.dataset == "imagenet":
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(224, scale=(scale_start, 1.0)),
                 # transforms.Resize(256),
                 # transforms.CenterCrop(224),
                 transforms.RandomHorizontalFlip(),
