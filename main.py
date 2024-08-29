@@ -13,7 +13,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
     else: 
         model = CLOA(batch_size, dataset, OAR, supervised, devices, k)
     
-    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset)
+    data_module = CustomDataModule(batch_size=batch_size*devices, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}')
 
     #next use iNaturalist
@@ -41,9 +41,9 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
     trainer.save_checkpoint(f'{dataset}-{batch_size*devices}-oar:{OAR}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset, OAR):
+def eval(pretrain_dir, batch_size, epochs, dataset, OAR, devices):
     model = CLOA.load_from_checkpoint(pretrain_dir)
-    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset)
+    data_module = CustomEvaluationDataModule(batch_size=batch_size*devices, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-oar:{OAR}')
     if dataset == "cifar10": 
         num_classes = 10
@@ -56,7 +56,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, OAR):
         feature_dim = 1024
 
     linear_classifier = LinearClassifier(
-        model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True,
+        model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True, devices=devices
     )
 
     checkpoint_callback = ModelCheckpoint(
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.OAR)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.OAR, args.devices)
     elif args.extract_data:
         extract_data(args.dataset)
     else:

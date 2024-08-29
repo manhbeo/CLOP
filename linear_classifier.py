@@ -18,6 +18,7 @@ class LinearClassifier(LightningModule):
         num_classes: int = 1000,
         topk: Tuple[int, ...] = (1, 5),
         freeze_model: bool = False,
+        devices=1
     ) -> None:
         """Linear classifier for benchmarking.
 
@@ -87,6 +88,7 @@ class LinearClassifier(LightningModule):
         self.num_classes = num_classes
         self.topk = topk
         self.freeze_model = freeze_model
+        self.devices = devices
 
         self.classification_head = Linear(feature_dim, num_classes)
         self.criterion = CrossEntropyLoss()
@@ -135,7 +137,7 @@ class LinearClassifier(LightningModule):
         if not self.freeze_model:
             parameters += self.model.parameters()
         optimizer = LARS(self.parameters(), 
-                         lr=0.1 * self.batch_size_per_device * self.trainer.world_size / 256)
+                         lr=0.1 * self.batch_size_per_device * self.devices / 256)
         scheduler = {
             "scheduler": CosineWarmupScheduler(
                 optimizer=optimizer,
