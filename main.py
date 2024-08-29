@@ -6,7 +6,7 @@ import argparse
 from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1, k=200, num_workers=9):
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1, k=100, num_workers=9):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument("--pretrain_dir", type=str)
     parser.add_argument("--batch_size", type=int)
     parser.add_argument("--devices", type=int, default=1)
-    parser.add_argument("-k", type=int, default=200)
+    parser.add_argument("-k", type=int, default=100)
     parser.add_argument("--num_workers", type=int, default=9)
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--OAR", action='store_true')
