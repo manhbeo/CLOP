@@ -105,14 +105,14 @@ class CustomDataModule(pl.LightningDataModule):
             elif self.dataset == "cifar100":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(32, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(32),
                 transforms.RandomHorizontalFlip(),
                 # transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
                 transforms.RandomApply([
                     transforms.ColorJitter(0.5, 0.5, 0.5, 0.1)
                 ], p=0.8),
                 transforms.RandomGrayscale(p=0.2),
-                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(32 * 0.1), sigma=(0.1, 2.0))], p=0.5),
+                # transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(32 * 0.1), sigma=(0.1, 2.0))], p=0.5),
                 transforms.ToTensor(),
                 normalize,
             ])
@@ -186,21 +186,21 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             elif self.dataset == "cifar100":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(32, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(32),
                 transforms.RandomHorizontalFlip(),
                 # transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
                 transforms.RandomApply([
                     transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
                 ], p=0.8),
                 transforms.RandomGrayscale(p=0.2),
-                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(32 * 0.1), sigma=(0.1, 2.0))], p=0.5),
+                # transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(32 * 0.1), sigma=(0.1, 2.0))], p=0.5),
                 transforms.ToTensor(),
                 normalize,
             ])
         elif self.dataset == "imagenet":
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(224, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(224),
                 # transforms.Resize(256),
                 # transforms.CenterCrop(224),
                 transforms.RandomHorizontalFlip(),
