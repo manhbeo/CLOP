@@ -93,7 +93,7 @@ class CustomImageNetDataset(Dataset):
 
 
 class CustomDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100"):
+    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -139,6 +139,7 @@ class CustomDataModule(pl.LightningDataModule):
             transforms.ToTensor(),
             normalize
         ])
+        self.num_workers = num_workers
 
     def setup(self, stage):
         if self.dataset == "cifar10":
@@ -152,14 +153,14 @@ class CustomDataModule(pl.LightningDataModule):
             self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.val_transform)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=48)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=self.num_workers)
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=48)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=self.num_workers)
 
 
 class CustomEvaluationDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100"):
+    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100", num_workers=9):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -179,6 +180,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             transforms.ToTensor(),
             normalize
         ])
+        self.num_workers = num_workers
 
     def setup(self, stage):
         if self.dataset == "cifar10":
@@ -192,7 +194,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             self.val_dataset =  datasets.ImageNet(self.data_dir, split='val', transform=self.transform)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=48)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=48)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=self.num_workers)

@@ -6,13 +6,13 @@ import argparse
 from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1, k=200):
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1, k=200, num_workers=9):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
         model = CLOA(batch_size, dataset, OAR, supervised, devices, k)
     
-    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset)
+    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}')
 
     #next use iNaturalist
@@ -39,9 +39,9 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
     trainer.fit(model, data_module)
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset):
+def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
     model = CLOA.load_from_checkpoint(pretrain_dir)
-    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset)
+    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{pretrain_dir}')
     if dataset == "cifar10": 
         num_classes = 10
@@ -94,6 +94,7 @@ if __name__ == '__main__':
     parser.add_argument("--batch_size", type=int)
     parser.add_argument("--devices", type=int, default=1)
     parser.add_argument("-k", type=int, default=200)
+    parser.add_argument("--num_workers", type=int, default=9)
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--OAR", action='store_true')
     parser.add_argument("--supervised", action='store_true')
@@ -101,8 +102,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers)
     elif args.extract_data:
         extract_data(args.dataset)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.supervised, args.devices, args.k)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.supervised, args.devices, args.k, args.num_workers)
