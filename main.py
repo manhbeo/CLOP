@@ -56,7 +56,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, OAR, devices):
         feature_dim = 1024
 
     linear_classifier = LinearClassifier(
-        model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True, devices=devices
+        model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True
     )
 
     checkpoint_callback = ModelCheckpoint(
