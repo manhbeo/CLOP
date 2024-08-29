@@ -13,7 +13,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
     else: 
         model = CLOA(batch_size, dataset, OAR, supervised, devices, k)
     
-    data_module = CustomDataModule(batch_size=batch_size*devices, dataset=dataset)
+    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}')
 
     #next use iNaturalist
@@ -43,7 +43,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
 
 def eval(pretrain_dir, batch_size, epochs, dataset, OAR, devices):
     model = CLOA.load_from_checkpoint(pretrain_dir)
-    data_module = CustomEvaluationDataModule(batch_size=batch_size*devices, dataset=dataset)
+    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-oar:{OAR}')
     if dataset == "cifar10": 
         num_classes = 10
