@@ -41,7 +41,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
     trainer.save_checkpoint(f'{dataset}-{batch_size*devices}-oar:{OAR}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset, OAR):
+def eval(pretrain_dir, batch_size, epochs, dataset):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir}')
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.OAR)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset)
     elif args.extract_data:
         extract_data(args.dataset)
     else:
