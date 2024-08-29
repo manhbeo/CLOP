@@ -5,7 +5,6 @@ import pytorch_lightning as pl
 import argparse
 from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
-import os
 
 def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1, k=200):
     if pretrain_dir != None:
