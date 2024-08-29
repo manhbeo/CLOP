@@ -7,11 +7,11 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import os
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1):
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1, k=100):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOA(batch_size, dataset, OAR, supervised, devices)
+        model = CLOA(batch_size, dataset, OAR, supervised, devices, k)
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}')
@@ -96,6 +96,7 @@ if __name__ == '__main__':
     parser.add_argument("--pretrain_dir", type=str)
     parser.add_argument("--batch_size", type=int)
     parser.add_argument("--devices", type=int, default=1)
+    parser.add_argument("-k", type=int, default=100)
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--OAR", action='store_true')
     parser.add_argument("--supervised", action='store_true')
@@ -107,4 +108,4 @@ if __name__ == '__main__':
     elif args.extract_data:
         extract_data(args.dataset)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.supervised, args.devices)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.supervised, args.devices, args.k)
