@@ -7,16 +7,14 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import os
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, 
-          supervised=False, devices=1, num_workers=9, scale_start=0.08):
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
         model = CLOA(batch_size, dataset, OAR, supervised, devices)
     
-    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, 
-                                   num_workers=num_workers, scale_start=scale_start)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}-scale:{scale_start}')
+    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset)
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar:{OAR}')
 
     #next use iNaturalist
     checkpoint_callback = ModelCheckpoint(
@@ -40,14 +38,13 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True,
                         deterministic=True)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'{dataset}-{batch_size*devices}-oar:{OAR}-scale:{scale_start}.ckpt')
+    trainer.save_checkpoint(f'{dataset}-{batch_size*devices}-oar:{OAR}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset, OAR, num_workers, scale_start):
+def eval(pretrain_dir, batch_size, epochs, dataset, OAR):
     model = CLOA.load_from_checkpoint(pretrain_dir)
-    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, 
-                                             num_workers=num_workers, OAR=OAR, scale_start=scale_start)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-oar:{OAR}-scale:{scale_start}')
+    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset)
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-oar:{OAR}')
     if dataset == "cifar10": 
         num_classes = 10
         feature_dim = 128
@@ -82,7 +79,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, OAR, num_workers, scale_star
                         callbacks=[checkpoint_callback],
                         deterministic=True)
     trainer.fit(linear_classifier, datamodule=data_module)
-    trainer.save_checkpoint(f'linear_eval-{dataset}-oar:{OAR}-scale:{scale_start}.ckpt')
+    trainer.save_checkpoint(f'linear_eval-{dataset}-oar:{OAR}.ckpt')
 
 
 def extract_data(dataset):
@@ -99,8 +96,6 @@ if __name__ == '__main__':
     parser.add_argument("--pretrain_dir", type=str)
     parser.add_argument("--batch_size", type=int)
     parser.add_argument("--devices", type=int, default=1)
-    parser.add_argument("--num_workers", type=int, default=9)
-    parser.add_argument("--scale_start", type=float, default=0.08)
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--OAR", action='store_true')
     parser.add_argument("--supervised", action='store_true')
