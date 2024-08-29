@@ -43,7 +43,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
 def eval(pretrain_dir, batch_size, epochs, dataset):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{pretrain_dir}')
     if dataset == "cifar10": 
         num_classes = 10
         feature_dim = 128
@@ -78,7 +78,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset):
                         callbacks=[checkpoint_callback],
                         deterministic=True)
     trainer.fit(linear_classifier, datamodule=data_module)
-    trainer.save_checkpoint(f'linear_eval-{dataset}-{pretrain_dir}')
+    trainer.save_checkpoint(f'linear_eval-{pretrain_dir}')
 
 
 def extract_data(dataset):
