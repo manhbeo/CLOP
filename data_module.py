@@ -223,11 +223,11 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
 
     def setup(self, stage):
         if self.dataset == "cifar10":
-            self.train_dataset = datasets.CIFAR10(self.data_dir, train=True, transform=self.transform)
-            self.val_dataset = datasets.CIFAR10(self.data_dir, train=False, transform=self.transform)
+            self.train_dataset = datasets.CIFAR10(self.data_dir, train=True, transform=self.transform, download=True)
+            self.val_dataset = datasets.CIFAR10(self.data_dir, train=False, transform=self.transform, download=True)
         elif self.dataset == "cifar100":
-            self.train_dataset = datasets.CIFAR100(self.data_dir, train=True, transform=self.val_transform)
-            self.val_dataset = datasets.CIFAR100(self.data_dir, train=False, transform=self.val_transform)
+            self.train_dataset = datasets.CIFAR100(self.data_dir, train=True, transform=self.val_transform, download=True)
+            self.val_dataset = datasets.CIFAR100(self.data_dir, train=False, transform=self.val_transform, download=True)
         elif self.dataset == "imagenet":
             self.train_dataset = datasets.ImageNet(self.data_dir, split='train', transform=self.transform)
             self.val_dataset =  datasets.ImageNet(self.data_dir, split='val', transform=self.transform)
