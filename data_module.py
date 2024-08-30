@@ -5,7 +5,6 @@ import pickle
 import pytorch_lightning as pl
 import torch.distributed as dist
 
-#TODO: consider iNaturalist
 class CustomCIFAR10Dataset(Dataset):
     def __init__(self, root, train=True, transform=None):
         self.transform = transform
