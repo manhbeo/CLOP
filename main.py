@@ -39,6 +39,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
                         deterministic=True)
 
     trainer.fit(model, data_module)
+    trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}.ckpt')
 
 
 def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
@@ -79,6 +80,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
                         callbacks=[checkpoint_callback],
                         deterministic=True)
     trainer.fit(linear_classifier, datamodule=data_module)
+    trainer.save_checkpoint(f'linear_eval{pretrain_dir}')
 
 
 def extract_data(dataset):
