@@ -45,6 +45,7 @@ class OARLoss(nn.Module):
         anchors_selected = self.anchors[labels]
         
         # Compute cosine similarity
+        #TODO: this might be wrong. Fix
         cosine_similarity = torch.sum(z_i * anchors_selected, dim=1) + torch.sum(z_j * anchors_selected, dim=1)
         cosine_similarity /= 2
         
