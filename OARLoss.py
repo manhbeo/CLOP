@@ -26,7 +26,7 @@ class OARLoss(nn.Module):
         if dist.is_initialized():
             dist.broadcast(self.anchors, 0)
 
-    def forward(self, embeddings: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    def forward(self, z_i: torch.Tensor, z_j: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
         """
         Compute the Orthogonal Anchor Regression Loss.
 
@@ -38,13 +38,15 @@ class OARLoss(nn.Module):
             torch.Tensor: The computed loss.
         """
         # Normalize embeddings to unit vectors
-        embeddings_norm = nn.functional.normalize(embeddings, p=2, dim=1)
+        z_i = nn.functional.normalize(z_i, p=2, dim=1)
+        z_j = nn.functional.normalize(z_j, p=2, dim=1)
         
         # Gather the corresponding anchors for each embedding in the batch
         anchors_selected = self.anchors[labels]
         
         # Compute cosine similarity
-        cosine_similarity = torch.sum(embeddings_norm * anchors_selected, dim=1)
+        cosine_similarity = torch.sum(z_i * anchors_selected, dim=1) + torch.sum(z_j * anchors_selected, dim=1)
+        cosine_similarity /= 2
         
         # Compute the loss as the mean of (1 - cosine similarity)
         loss = torch.mean(1 - cosine_similarity)
