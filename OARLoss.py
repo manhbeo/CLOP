@@ -31,7 +31,8 @@ class OARLoss(nn.Module):
         Compute the Orthogonal Anchor Regression Loss.
 
         Args:
-            embeddings (torch.Tensor): Batch of embeddings, shape (batch_size, embedding_dim)
+            z_i (torch.Tensor): Batch of embeddings, shape (batch_size, embedding_dim)
+            z_j (torch.Tensor): Batch of embeddings, shape (batch_size, embedding_dim)
             labels (torch.Tensor): Corresponding labels for each embedding, shape (batch_size,)
         
         Returns:
