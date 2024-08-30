@@ -80,7 +80,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
                         callbacks=[checkpoint_callback],
                         deterministic=True)
     trainer.fit(linear_classifier, datamodule=data_module)
-    trainer.save_checkpoint(f'linear_eval{pretrain_dir}')
+    trainer.save_checkpoint(f'linear_eval-{pretrain_dir}')
 
 
 def extract_data(dataset):
