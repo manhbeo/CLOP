@@ -6,6 +6,9 @@ import argparse
 from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 
+#TODO: use more datasets
+#TODO: experiment with different lambda value
+#TODO: experiment with different distance measuring method in OAR loss
 def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1, k=100, num_workers=9):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
@@ -15,7 +18,6 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}')
 
-    #next use iNaturalist
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
         mode="min",
