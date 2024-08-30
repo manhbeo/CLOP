@@ -6,9 +6,6 @@ import argparse
 from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 
-#TODO: use more datasets
-#TODO: experiment with different lambda value
-#TODO: experiment with different distance measuring method in OAR loss
 def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1, k=100, num_workers=9):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
