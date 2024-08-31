@@ -92,7 +92,7 @@ class CustomImageNetDataset(Dataset):
 
 
 class CustomDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9):
+    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9, scale=False, gauss=True):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -104,14 +104,14 @@ class CustomDataModule(pl.LightningDataModule):
             elif self.dataset == "cifar100":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408], std=[0.2675, 0.2565, 0.2761])
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(32, scale=(0.2, 1.0)),
+                transforms.RandomResizedCrop(32, scale=(0.2, 1.0) if scale else (0.08, 1.0)),
                 transforms.RandomHorizontalFlip(),
                 # transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
                 transforms.RandomApply([
                     transforms.ColorJitter(0.5, 0.5, 0.5, 0.1)
                 ], p=0.8),
                 transforms.RandomGrayscale(p=0.2),
-                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(32 * 0.1), sigma=(0.1, 2.0))], p=0.5),
+                transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(32 * 0.1), sigma=(0.1, 2.0))], p=0.5 if gauss else 0.0),
                 transforms.ToTensor(),
                 normalize,
             ])
