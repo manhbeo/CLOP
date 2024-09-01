@@ -15,7 +15,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, 
                                    scale=scale, gauss=gauss)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}-0.4')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -38,7 +38,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
                         deterministic=True)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}-0.4.ckpt')
+    trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}.ckpt')
 
 
 def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
