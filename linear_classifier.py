@@ -18,7 +18,6 @@ class LinearClassifier(LightningModule):
         num_classes: int = 1000,
         topk: Tuple[int, ...] = (1, 5),
         freeze_model: bool = False,
-        dataset="cifar100"
     ) -> None:
         """Linear classifier for benchmarking.
 
@@ -136,13 +135,8 @@ class LinearClassifier(LightningModule):
         parameters = list(self.classification_head.parameters())
         if not self.freeze_model:
             parameters += self.model.parameters()
-        if self.dataset.startswith("cifar"):
-            optimizer = SGD(self.parameters(), 
-                            lr=0.1 * self.batch_size_per_device * self.trainer.world_size / 256,
-                            momentum=0.9)
-        else:
-            optimizer = LARS(self.parameters(), 
-                             lr=0.1 * self.batch_size_per_device * self.trainer.world_size / 256)
+        optimizer = LARS(self.parameters(), 
+                         lr=0.1 * self.batch_size_per_device * self.trainer.world_size / 256)
         scheduler = {
             "scheduler": CosineWarmupScheduler(
                 optimizer=optimizer,
