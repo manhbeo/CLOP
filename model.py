@@ -6,6 +6,7 @@ from lightly.loss.ntx_ent_loss import NTXentLoss
 from supervised import Supervised_NTXentLoss
 import pytorch_lightning as pl
 import torch
+from torch.optim import SGD
 from knn_predict import knn_predict
 from LARs import LARS
 import math
@@ -67,8 +68,10 @@ class CLOA(pl.LightningModule):
 
         self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
 
-        self.learning_rate = 0.075 * math.sqrt(batch_size*devices)
-        # self.learning_rate = 0.3 * batch_size * devices / 256
+        if self.dataset.startswith("cifar"):
+            self.learning_rate = 0.3 * batch_size * devices / 256
+        else: 
+            self.learning_rate = 0.075 * math.sqrt(batch_size*devices)
         self.feature_bank_size = 1024
         self._init_feature_bank(self.feature_bank_size)
     
@@ -141,7 +144,10 @@ class CLOA(pl.LightningModule):
 
     
     def configure_optimizers(self):
-        optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
+        if self.dataset.startswith("cifar"):
+            optimizer = SGD(self.parameters(), lr=self.learning_rate, momentum=0.9)
+        else:
+            optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
         self.scheduler = CosineWarmupScheduler(
                 optimizer=optimizer,
                 warmup_epochs=0,

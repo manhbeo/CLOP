@@ -49,16 +49,13 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir}')
     if dataset == "cifar10": 
         num_classes = 10
-        feature_dim = 128
     elif dataset == "cifar100": 
         num_classes = 100
-        feature_dim = 128
     elif dataset == "imagenet":
         num_classes = 1000
-        feature_dim = 1024
 
     linear_classifier = LinearClassifier(
-        model, batch_size, feature_dim=2048, num_classes=num_classes, topk=(1,5), freeze_model=True
+        model, batch_size, num_classes=num_classes, freeze_model=True
     )
 
     checkpoint_callback = ModelCheckpoint(
