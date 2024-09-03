@@ -39,8 +39,8 @@ class OARLoss(nn.Module):
             torch.Tensor: The computed loss.
         """
         # Normalize embeddings to unit vectors
-        z_i = nn.functional.normalize(z_i, p=2, dim=1)
-        z_j = nn.functional.normalize(z_j, p=2, dim=1)
+        z_i = nn.functional.normalize(z_i, dim=1)
+        z_j = nn.functional.normalize(z_j, dim=1)
         
         # Gather the corresponding anchors for each embedding in the batch
         anchors_selected = self.anchors[labels]
