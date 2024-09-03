@@ -145,7 +145,7 @@ class CLOA(pl.LightningModule):
     
     def configure_optimizers(self):
         if self.dataset.startswith("cifar"):
-            optimizer = SGD(self.parameters(), lr=self.learning_rate, momentum=0.9)
+            optimizer = SGD(self.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=1e-6)
         else:
             optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
         self.scheduler = CosineWarmupScheduler(
