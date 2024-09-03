@@ -75,7 +75,7 @@ class CLOA(pl.LightningModule):
             self.learning_rate = 0.3 * batch_size * devices / 256
         else: 
             self.learning_rate = 0.075 * math.sqrt(batch_size*devices)
-        self.feature_bank_size = 1024
+        self.feature_bank_size = 2048
         self._init_feature_bank(self.feature_bank_size)
     
     def _init_feature_bank(self, feature_bank_size):
