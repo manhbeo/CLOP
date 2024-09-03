@@ -5,6 +5,7 @@ import pytorch_lightning as pl
 import argparse
 from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
+import torch.nn as nn
 
 def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1, k=100, num_workers=9,
           scale=True, gauss=True):
@@ -43,6 +44,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
 
 def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
     model = CLOA.load_from_checkpoint(pretrain_dir)
+    model.projection_head = nn.Identity()
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir}')
     if dataset == "cifar10": 
@@ -56,7 +58,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
         feature_dim = 1024
 
     linear_classifier = LinearClassifier(
-        model, batch_size, feature_dim=feature_dim, num_classes=num_classes, topk=(1,5), freeze_model=True
+        model, batch_size, feature_dim=2048, num_classes=num_classes, topk=(1,5), freeze_model=True
     )
 
     checkpoint_callback = ModelCheckpoint(
