@@ -11,6 +11,7 @@ from knn_predict import knn_predict
 from LARs import LARS
 import math
 from lightly.utils.scheduler import CosineWarmupScheduler
+import torch.nn.functional as F
 
 class ResNet50_CIFAR(nn.Module):
     def __init__(self):
@@ -23,7 +24,8 @@ class ResNet50_CIFAR(nn.Module):
         self.resnet50.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
 
     def forward(self, x):
-        return self.resnet50(x)
+        x = self.resnet50(x)
+        return F.normalize(x, dim=1)
 
 class ResNet50(nn.Module):
     def __init__(self):
@@ -32,7 +34,8 @@ class ResNet50(nn.Module):
         self.resnet50.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
 
     def forward(self, x):
-        return self.resnet50(x)
+        x = self.resnet50(x)
+        return F.normalize(x, dim=1)
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
