@@ -55,7 +55,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
         num_classes = 1000
 
     linear_classifier = LinearClassifier(
-        model, batch_size, num_classes=num_classes, freeze_model=True, dataset=dataset
+        model, batch_size, num_classes=num_classes, freeze_model=True
     )
 
     checkpoint_callback = ModelCheckpoint(
