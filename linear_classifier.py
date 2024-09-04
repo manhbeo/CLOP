@@ -87,7 +87,6 @@ class LinearClassifier(LightningModule):
         self.num_classes = num_classes
         self.topk = topk
         self.freeze_model = freeze_model
-        self.dataset = dataset
 
         self.classification_head = Linear(feature_dim, num_classes)
         self.criterion = CrossEntropyLoss()
