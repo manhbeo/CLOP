@@ -4,6 +4,7 @@ import os
 import pickle
 import pytorch_lightning as pl
 import torch.distributed as dist
+from tinyimagenet import TinyImageNet
 
 class CustomCIFAR10Dataset(Dataset):
     def __init__(self, root, train=True, transform=None):
@@ -91,6 +92,27 @@ class CustomImageNetDataset(Dataset):
         return len(self.dataset)
 
 
+class CustomTinyImagenetDataset(Dataset):
+    def __init__(self, root, split='train', transform=None):
+        self.root = root
+        self.split = split
+        self.transform = transform
+        
+        self.dataset = TinyImageNet(root=root, split=split, download=True)
+
+    def __getitem__(self, index):
+        img, label = self.dataset[index]
+        
+        if self.transform is not None:
+            img1 = self.transform(img)
+            img2 = self.transform(img)
+
+        return (img1, img2), label
+
+    def __len__(self):
+        return len(self.dataset)
+
+
 class CustomDataModule(pl.LightningDataModule):
     def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9, scale=False, gauss=True):
         super().__init__()
@@ -99,6 +121,8 @@ class CustomDataModule(pl.LightningDataModule):
         self.dataset = dataset
 
         if self.dataset.startswith("cifar"):
+            resize_size = 32
+            crop_size = 32
             if self.dataset == "cifar10":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
             elif self.dataset == "cifar100":
@@ -115,6 +139,8 @@ class CustomDataModule(pl.LightningDataModule):
                 normalize,
             ])
         elif self.dataset == "imagenet":
+            resize_size = 256
+            crop_size = 224
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             self.train_transform = transforms.Compose([
                 # transforms.RandomResizedCrop(224),
@@ -131,9 +157,24 @@ class CustomDataModule(pl.LightningDataModule):
                 normalize
             ])
 
+        elif self.dataset == "tiny_imagenet":
+            resize_size = 64
+            crop_size = 64
+            normalize = transforms.Normalize(mean=[0.4802, 0.4481, 0.3975], std=[0.2302, 0.2265, 0.2262])
+            self.train_transform = transforms.Compose([
+                transforms.RandomResizedCrop(64, scale=(0.2, 1.0)),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomApply([
+                    transforms.ColorJitter(0.6, 0.6, 0.6, 0.15)
+                ], p=0.8),
+                transforms.RandomGrayscale(p=0.2),
+                transforms.ToTensor(),
+                normalize
+            ])
+
         self.val_transform = transforms.Compose([
-            transforms.Resize(32 if self.dataset.startswith("cifar") else 256),
-            transforms.CenterCrop(32 if self.dataset.startswith("cifar") else 224),
+            transforms.Resize(resize_size),
+            transforms.CenterCrop(crop_size),
             transforms.ToTensor(),
             normalize
         ])
@@ -141,14 +182,17 @@ class CustomDataModule(pl.LightningDataModule):
 
     def setup(self, stage):
         if self.dataset == "cifar10":
-            self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
-            self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.val_transform)
+            self.train_dataset = CustomCIFAR10Dataset(self.data_dir, train=True, transform=self.train_transform)
+            self.val_dataset = CustomCIFAR10Dataset(self.data_dir, train=False, transform=self.val_transform)
         elif self.dataset == "cifar100":
             self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
             self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.val_transform)
         elif self.dataset == "imagenet":
             self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
             self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.val_transform)
+        elif self.dataset == "tiny_imagenet":
+            self.train_dataset = CustomTinyImagenetDataset(self.data_dir, split='train', transform=self.train_transform)
+            self.val_dataset =  CustomTinyImagenetDataset(self.data_dir, split='val', transform=self.val_transform)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=self.num_workers)
@@ -165,6 +209,8 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
         self.dataset = dataset
 
         if self.dataset.startswith("cifar"):
+            resize_size = 32
+            crop_size = 32
             if self.dataset == "cifar10":
                 normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409], std=[0.2673, 0.2564, 0.2762])
             elif self.dataset == "cifar100":
@@ -181,6 +227,8 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                 normalize,
             ])
         elif self.dataset == "imagenet":
+            resize_size = 256
+            crop_size = 224
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             self.train_transform = transforms.Compose([
                 # transforms.RandomResizedCrop(224),
@@ -197,9 +245,24 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                 normalize
             ])
 
+        elif self.dataset == "tiny_imagenet":
+            resize_size = 64
+            crop_size = 64
+            normalize = transforms.Normalize(mean=[0.4802, 0.4481, 0.3975], std=[0.2302, 0.2265, 0.2262])
+            self.train_transform = transforms.Compose([
+                transforms.RandomResizedCrop(64, scale=(0.2, 1.0)),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomApply([
+                    transforms.ColorJitter(0.6, 0.6, 0.6, 0.15)
+                ], p=0.8),
+                transforms.RandomGrayscale(p=0.2),
+                transforms.ToTensor(),
+                normalize
+            ])
+
         self.val_transform = transforms.Compose([
-            transforms.Resize(32 if self.dataset.startswith("cifar") else 256),
-            transforms.CenterCrop(32 if self.dataset.startswith("cifar") else 224),
+            transforms.Resize(resize_size),
+            transforms.CenterCrop(crop_size),
             transforms.ToTensor(),
             normalize
         ])
@@ -215,9 +278,13 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
         elif self.dataset == "imagenet":
             self.train_dataset = datasets.ImageNet(self.data_dir, split='train', transform=self.train_transform)
             self.val_dataset =  datasets.ImageNet(self.data_dir, split='val', transform=self.val_transform)
+        elif self.dataset == "tiny_imagenet":
+            self.train_dataset = TinyImageNet(self.data_dir, split='train', transform=self.train_transform)
+            self.val_dataset =  TinyImageNet(self.data_dir, split='val', transform=self.val_transform)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
 
     def val_dataloader(self):
         return DataLoader(self.val_dataset, batch_size=self.batch_size, num_workers=self.num_workers)
+    

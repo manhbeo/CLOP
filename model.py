@@ -6,7 +6,6 @@ from lightly.loss.ntx_ent_loss import NTXentLoss
 from supervised import Supervised_NTXentLoss
 import pytorch_lightning as pl
 import torch
-from torch.optim import SGD
 from knn_predict import knn_predict
 from LARs import LARS
 import math

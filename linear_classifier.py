@@ -3,7 +3,7 @@ import torch
 from pytorch_lightning import LightningModule
 from torch import Tensor
 from torch.nn import CrossEntropyLoss, Linear, Module
-from torch.optim import Optimizer, SGD
+from torch.optim import Optimizer
 from LARs import LARS
 from lightly.utils.benchmarking.topk import mean_topk_accuracy
 from lightly.utils.scheduler import CosineWarmupScheduler
