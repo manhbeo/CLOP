@@ -8,7 +8,7 @@ from linear_classifier import LinearClassifier
 import torch.nn as nn
 
 def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1, k=100, num_workers=9,
-          scale=True, gauss=True):
+          distance="cosine"):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
@@ -16,7 +16,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, 
                                    scale=scale, gauss=gauss)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}-dis={distance}')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -39,7 +39,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised
                         deterministic=True)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}.ckpt')
+    trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}-dis={distance}.ckpt')
 
 
 def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
