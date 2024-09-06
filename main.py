@@ -7,11 +7,11 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch.nn as nn
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, supervised=False, devices=1, k=100, num_workers=9, distance="cosine"):
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_ent", devices=1, k=100, num_workers=9, distance="cosine"):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOA(batch_size, dataset, OAR, supervised, devices, k)
+        model = CLOA(batch_size, dataset, OAR, loss, devices, k)
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}-dis={distance}')
@@ -97,8 +97,8 @@ if __name__ == '__main__':
     parser.add_argument("--num_workers", type=int, default=9)
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--distance", type=str)
+    parser.add_argument("--loss", type=str)
     parser.add_argument("--OAR", action='store_true')
-    parser.add_argument("--supervised", action='store_true')
     parser.add_argument("--extract_data", action='store_true')
     args = parser.parse_args()
 
@@ -107,4 +107,4 @@ if __name__ == '__main__':
     elif args.extract_data:
         extract_data(args.dataset)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.supervised, args.devices, args.k, args.num_workers, args.distance)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.loss, args.devices, args.k, args.num_workers, args.distance)

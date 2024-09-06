@@ -38,36 +38,43 @@ class ResNet50(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, batch_size=128, dataset="cifar100", OAR=True, supervised=True, devices=1, k=100, distance="cosine"):
+    def __init__(self, batch_size=128, dataset="cifar100", OAR=True, loss="ntx_ent", devices=1, k=100, distance="cosine"):
         super(CLOA, self).__init__()
         self.dataset = dataset
         self.k = k
 
-        if dataset.startswith("cifar"):
+        if dataset.startswith("cifar") or dataset == "tiny_imagenet":
             self.encoder = ResNet50_small()
             if dataset == "cifar10": 
-                temperature = 0.5
                 self.num_classes = 10
             elif dataset == "cifar100": 
-                temperature = 0.2
                 self.num_classes = 100
-            self.output_dim = 128
+            elif dataset == "tiny_imagenet":
+                self.num_classes = 200
         elif dataset == "imagenet":
-            temperature = 0.1
             self.encoder = ResNet50()
-            self.num_classes = 1000
-            self.output_dim = 1024
-        elif dataset == "tiny_imagenet":
-            temperature = 0.1
-            self.encoder = ResNet50_small()
-            self.num_classes = 200
-            self.output_dim = 256
+            self.num_classes = 1000    
 
-        self.supervised = supervised
+        self.loss = loss
+        if self.loss == "nxt_ent" or self.loss == "supcon":
+            if dataset == "cifar10": 
+                temperature = 0.5
+                self.output_dim = 128
+            elif dataset == "cifar100": 
+                temperature = 0.2
+                self.output_dim = 128
+            elif dataset == "imagenet":
+                temperature = 0.1
+                self.output_dim = 1024
+            elif dataset == "tiny_imagenet":
+                temperature = 0.1
+                self.num_classes = 200
+                self.output_dim = 256
+
         self.OAR = None
-        if not self.supervised:
+        if self.loss == "nxt_ent":
             self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
-        elif self.supervised:
+        elif self.loss == "supcon":
             self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
 
         if OAR:
@@ -105,7 +112,7 @@ class CLOA(pl.LightningModule):
         z_i = self.forward(x_i)
         z_j = self.forward(x_j)
 
-        if self.supervised: 
+        if self.loss == "supcon": 
             loss = self.criterion(z_i, z_j, fine_label)
         else:    
             loss = self.criterion(z_i, z_j)
