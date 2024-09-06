@@ -1,7 +1,6 @@
 paper_with_review.pdf
 run.sh
 data
-test.ipynb
 wandb
 .cache
 weights
