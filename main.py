@@ -98,8 +98,6 @@ if __name__ == '__main__':
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--distance", type=str)
     parser.add_argument("--OAR", action='store_true')
-    parser.add_argument("--scale", action='store_true')
-    parser.add_argument("--gauss", action='store_true')
     parser.add_argument("--supervised", action='store_true')
     parser.add_argument("--extract_data", action='store_true')
     args = parser.parse_args()
