@@ -63,7 +63,7 @@ class CustomImageNetDataset(Dataset):
             # If running in distributed mode, only let one process extract
             if dist.is_initialized():
                 if dist.get_rank() == 0:
-                    self._extract_dataset()
+                    self._extract_dataset(dataset)
                 dist.barrier()  # Wait for rank 0 to finish extracting
             else:
                 self._extract_dataset(dataset)
