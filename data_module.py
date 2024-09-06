@@ -53,7 +53,7 @@ class CustomCIFAR100Dataset(Dataset):
 
 
 class CustomImageNetDataset(Dataset):
-    def __init__(self, root, split='train', transform=None):
+    def __init__(self, root, split='train', transform=None, dataset="imagenet"):
         self.root = root
         self.split = split
         self.transform = transform
@@ -66,39 +66,24 @@ class CustomImageNetDataset(Dataset):
                     self._extract_dataset()
                 dist.barrier()  # Wait for rank 0 to finish extracting
             else:
-                self._extract_dataset()
+                self._extract_dataset(dataset)
         
-        self.dataset = datasets.ImageNet(root=root, split=split)
+        if dataset.startswith("tiny"):
+            self.dataset = TinyImageNet(root=root, split=split, download=True)
+        else:
+            self.dataset = datasets.ImageNet(root=root, split=split)
         
         self._setup_labels()
 
-    def _extract_dataset(self):
+    def _extract_dataset(self, dataset):
         # This will trigger the extraction
-        datasets.ImageNet(root=self.root, split=self.split)
+        if dataset.startswith("tiny"):
+            TinyImageNet(root=self.root, split=self.split, download=True)
+        else:
+            datasets.ImageNet(root=self.root, split=self.split)
 
     def _setup_labels(self):
         self.labels = self.dataset.targets
-
-    def __getitem__(self, index):
-        img, label = self.dataset[index]
-        
-        if self.transform is not None:
-            img1 = self.transform(img)
-            img2 = self.transform(img)
-
-        return (img1, img2), label
-
-    def __len__(self):
-        return len(self.dataset)
-
-
-class CustomTinyImagenetDataset(Dataset):
-    def __init__(self, root, split='train', transform=None):
-        self.root = root
-        self.split = split
-        self.transform = transform
-        
-        self.dataset = TinyImageNet(root=root, split=split, download=True)
 
     def __getitem__(self, index):
         img, label = self.dataset[index]
@@ -188,11 +173,11 @@ class CustomDataModule(pl.LightningDataModule):
             self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform)
             self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.val_transform)
         elif self.dataset == "imagenet":
-            self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform)
-            self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.val_transform)
+            self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform, dataset="imagenet")
+            self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.val_transform, dataset="imagenet")
         elif self.dataset == "tiny_imagenet":
-            self.train_dataset = CustomTinyImagenetDataset(self.data_dir, split='train', transform=self.train_transform)
-            self.val_dataset =  CustomTinyImagenetDataset(self.data_dir, split='val', transform=self.val_transform)
+            self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform, dataset="tiny_imagenet")
+            self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.val_transform, dataset="tiny_imagenet")
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, drop_last=True, num_workers=self.num_workers)
