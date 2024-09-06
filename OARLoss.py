@@ -6,7 +6,7 @@ class OARLoss(nn.Module):
     """
     Orthogonal Anchor Regression Loss with SVD-initialized anchors. Add this to a (main) loss function
     """
-    def __init__(self, num_classes: int = 100, embedding_dim: int = 128, lambda_value: float = 1.0):
+    def __init__(self, num_classes: int = 100, embedding_dim: int = 128, lambda_value: float = 1.0, distance: str = "cosine"):
         """
         Args:
             num_classes (int): Number of classes, and thus the number of anchors.
@@ -16,6 +16,7 @@ class OARLoss(nn.Module):
         self.num_classes = num_classes
         self.embedding_dim = embedding_dim
         self.lambda_value = lambda_value
+        self.distance = distance
         
         # Initialize anchors using SVD to ensure they are orthogonal
         random_matrix = torch.randn(num_classes, embedding_dim)
@@ -46,11 +47,26 @@ class OARLoss(nn.Module):
         anchors_selected = self.anchors[labels]
         
         # Compute cosine similarity
-        cosine_similarity = torch.sum(z_i * anchors_selected, dim=1) + torch.sum(z_j * anchors_selected, dim=1)
-        cosine_similarity /= 2
-        
-        # Compute the loss as the mean of (1 - cosine similarity)
-        loss = torch.mean(1 - cosine_similarity)
+        if self.distance == "cosine": 
+            cosine_similarity = torch.sum(z_i * anchors_selected, dim=1) + torch.sum(z_j * anchors_selected, dim=1)
+            cosine_similarity /= 2
+            # Compute the loss as the mean of (1 - cosine similarity)
+            loss = torch.mean(1 - cosine_similarity)
+            
+        elif self.distance == "euclidean":
+            # Euclidean distance
+            euclidean_distance = torch.norm(z_i - anchors_selected, p=2, dim=1) + torch.norm(z_j - anchors_selected, p=2, dim=1)
+            euclidean_distance /= 2
+            # Compute the loss as the mean of the Euclidean distance
+            loss = torch.mean(euclidean_distance)
+
+        elif self.distance == "manhattan":
+            # Manhattan distance
+            manhattan_distance = torch.sum(torch.abs(z_i - anchors_selected), dim=1) + torch.sum(torch.abs(z_j - anchors_selected), dim=1)
+            manhattan_distance /= 2
+            # Compute the loss as the mean of the Manhattan distance
+            loss = torch.mean(manhattan_distance)
+
         loss *= self.lambda_value
         
         # Use distributed reduce to average the loss across all processes

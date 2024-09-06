@@ -98,6 +98,7 @@ if __name__ == '__main__':
     parser.add_argument("-k", type=int, default=100)
     parser.add_argument("--num_workers", type=int, default=9)
     parser.add_argument("--dataset", type=str)
+    parser.add_argument("--distance", type=str)
     parser.add_argument("--OAR", action='store_true')
     parser.add_argument("--scale", action='store_true')
     parser.add_argument("--gauss", action='store_true')
