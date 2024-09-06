@@ -12,9 +12,9 @@ import math
 from lightly.utils.scheduler import CosineWarmupScheduler
 import torch.nn.functional as F
 
-class ResNet50_CIFAR(nn.Module):
+class ResNet50_small(nn.Module):
     def __init__(self):
-        super(ResNet50_CIFAR, self).__init__()
+        super(ResNet50_small, self).__init__()
         self.resnet50 = models.resnet50(weights=None)
 
         # Modify the initial convolutional layer to better suit CIFAR
@@ -44,7 +44,7 @@ class CLOA(pl.LightningModule):
         self.k = k
 
         if dataset.startswith("cifar"):
-            self.encoder = ResNet50_CIFAR()
+            self.encoder = ResNet50_small()
             if dataset == "cifar10": 
                 temperature = 0.5
                 self.num_classes = 10
@@ -57,6 +57,11 @@ class CLOA(pl.LightningModule):
             self.encoder = ResNet50()
             self.num_classes = 1000
             self.output_dim = 1024
+        elif dataset == "tiny_imagenet":
+            temperature = 0.1
+            self.encoder = ResNet50_small()
+            self.num_classes = 200
+            self.output_dim = 256
 
         self.supervised = supervised
         self.OAR = None
