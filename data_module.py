@@ -99,7 +99,7 @@ class CustomImageNetDataset(Dataset):
 
 
 class CustomDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9):
+    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9, augment="auto_imgnet"):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -146,16 +146,23 @@ class CustomDataModule(pl.LightningDataModule):
             resize_size = 64
             crop_size = 64
             normalize = transforms.Normalize(mean=[0.4802, 0.4481, 0.3975], std=[0.2302, 0.2265, 0.2262])
-            self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(64, scale=(0.2, 1.0)),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomApply([
-                    transforms.ColorJitter(0.6, 0.6, 0.6, 0.15)
-                ], p=0.8),
-                transforms.RandomGrayscale(p=0.2),
-                transforms.ToTensor(),
-                normalize
-            ])
+            if augment == "fake_simclr":
+                self.train_transform = transforms.Compose([
+                    transforms.RandomResizedCrop(64, scale=(0.2, 1.0)),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomApply([
+                        transforms.ColorJitter(0.6, 0.6, 0.6, 0.15)
+                    ], p=0.8),
+                    transforms.RandomGrayscale(p=0.2),
+                    transforms.ToTensor(),
+                    normalize
+                ])
+            elif augment == "auto_imgnet":
+                self.train_transform = transforms.Compose([
+                    transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.IMAGENET),
+                    transforms.ToTensor(),
+                    normalize
+                ])
 
         self.val_transform = transforms.Compose([
             transforms.Resize(resize_size),
@@ -187,7 +194,7 @@ class CustomDataModule(pl.LightningDataModule):
 
 
 class CustomEvaluationDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100", num_workers=9):
+    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100", num_workers=9, augment="auto_imgnet"):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -234,16 +241,23 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             resize_size = 64
             crop_size = 64
             normalize = transforms.Normalize(mean=[0.4802, 0.4481, 0.3975], std=[0.2302, 0.2265, 0.2262])
-            self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(64, scale=(0.2, 1.0)),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomApply([
-                    transforms.ColorJitter(0.6, 0.6, 0.6, 0.15)
-                ], p=0.8),
-                transforms.RandomGrayscale(p=0.2),
-                transforms.ToTensor(),
-                normalize
-            ])
+            if augment == "fake_simclr":
+                self.train_transform = transforms.Compose([
+                    transforms.RandomResizedCrop(64, scale=(0.2, 1.0)),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomApply([
+                        transforms.ColorJitter(0.6, 0.6, 0.6, 0.15)
+                    ], p=0.8),
+                    transforms.RandomGrayscale(p=0.2),
+                    transforms.ToTensor(),
+                    normalize
+                ])
+            elif augment == "auto_imgnet":
+                self.train_transform = transforms.Compose([
+                    transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.IMAGENET),
+                    transforms.ToTensor(),
+                    normalize
+                ])
 
         self.val_transform = transforms.Compose([
             transforms.Resize(resize_size),

@@ -7,13 +7,13 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch.nn as nn
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_ent", devices=1, k=100, num_workers=9, distance="cosine"):
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_ent", devices=1, k=100, num_workers=9, distance="cosine", augment="auto_imgnet"):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
         model = CLOA(batch_size, dataset, OAR, loss, devices, k)
     
-    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
+    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}-dis={distance}')
 
     checkpoint_callback = ModelCheckpoint(
@@ -40,10 +40,10 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_
     trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}-dis={distance}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
+def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet"):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     model.projection_head = nn.Identity()
-    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
+    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment)
 
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir}')
     if dataset == "cifar10": 
@@ -54,7 +54,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
         num_classes = 1000
     elif dataset == "tiny_imagenet":
         num_classes = 200
-        
+
     data_module.setup(stage='fit')
 
     linear_classifier = LinearClassifier(
@@ -117,16 +117,17 @@ if __name__ == '__main__':
     parser.add_argument("--num_workers", type=int, default=9)
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--distance", type=str)
+    parser.add_argument("--augment", type=str)
     parser.add_argument("--loss", type=str)
     parser.add_argument("--OAR", action='store_true')
     parser.add_argument("--extract_data", action='store_true')
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment)
     elif args.extract_data:
         extract_data(args.dataset)
     elif args.test:
         test(args.pretrain_dir, args.batch_size, args.dataset, args.num_workers)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.loss, args.devices, args.k, args.num_workers, args.distance)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.loss, args.devices, args.k, args.num_workers, args.distance, args.augment)
