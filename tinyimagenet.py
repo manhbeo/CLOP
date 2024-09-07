@@ -98,8 +98,7 @@ class TinyImageNet(ImageFolder):
         if self._check_exists():
             return
         download_and_extract_archive(
-            self.url, self.data_root, filename=self.filename,
-            remove_finished=True, md5=self.zip_md5)
+            self.url, self.data_root, filename=self.filename, md5=self.zip_md5)
         assert 'val' in self.splits
         normalize_tin_val_folder_structure(
             os.path.join(self.dataset_folder, 'val'))
