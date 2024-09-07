@@ -93,6 +93,21 @@ def extract_data(dataset):
     data_module = CustomDataModule(batch_size=32, dataset=dataset)
     data_module.setup(stage="fit")
 
+def test(pretrain_dir, batch_size, dataset, num_workers):
+    model = CLOA.load_from_checkpoint(pretrain_dir)
+    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
+
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Test", name=f'{dataset}-{pretrain_dir}')
+
+    trainer = pl.Trainer(logger=wandb_logger,
+                        devices="auto",
+                        accelerator="gpu",
+                        strategy="ddp_find_unused_parameters_true",
+                        sync_batchnorm=True,
+                        use_distributed_sampler=True,
+                        deterministic=True)
+    trainer.test(model, datamodule=data_module)
+
 
 if __name__ == '__main__':
     seed_everything(1234) 
@@ -116,5 +131,7 @@ if __name__ == '__main__':
         eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers)
     elif args.extract_data:
         extract_data(args.dataset)
+    elif args.test:
+        test(args.pretrain_dir, args.batch_size, args.dataset, args.num_workers)
     else:
         train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.loss, args.devices, args.k, args.num_workers, args.distance)
