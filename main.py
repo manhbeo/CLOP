@@ -61,7 +61,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
     for batch in data_module.val_dataloader():
         _, labels = batch
         min_label = min(min_label, labels.min().item())  # Get the minimum label in the batch
-        if labels.max() < num_classes: print(f"Found out-of-range labels: {labels.max()}")
+        if labels.max() >= num_classes: print(f"Found out-of-range labels: {labels.max()}")
     print(f"The minimum label in the validation set is: {min_label}")
 
     linear_classifier = LinearClassifier(
