@@ -259,7 +259,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                 self.train_transform = transforms.Compose([
                     transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.IMAGENET),
                     transforms.ToTensor(),
-                    normalize
+                    # normalize
                 ])
 
         self.val_transform = transforms.Compose([
