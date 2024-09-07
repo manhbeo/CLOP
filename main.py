@@ -51,6 +51,8 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
         num_classes = 100
     elif dataset == "imagenet":
         num_classes = 1000
+    elif dataset == "tiny_imagenet":
+        num_classes = 200
 
     linear_classifier = LinearClassifier(
         model, batch_size, num_classes=num_classes, freeze_model=True
