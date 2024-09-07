@@ -57,7 +57,7 @@ class CLOA(pl.LightningModule):
             self.num_classes = 1000    
 
         self.loss = loss
-        if self.loss == "nxt_ent" or self.loss == "supcon":
+        if self.loss == "ntx_ent" or self.loss == "supcon":
             if dataset == "cifar10": 
                 temperature = 0.5
                 self.output_dim = 128
@@ -69,7 +69,6 @@ class CLOA(pl.LightningModule):
                 self.output_dim = 1024
             elif dataset == "tiny_imagenet":
                 temperature = 0.1
-                self.num_classes = 200
                 self.output_dim = 256
             if self.loss == "nxt_ent":
                 self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
