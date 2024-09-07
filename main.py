@@ -44,7 +44,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     model.projection_head = nn.Identity()
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
-    data_module.setup()
+    data_module.setup(stage='fit')
     min_label = float('inf')  # Initialize to a large value
     # Check label ranges
     for batch in data_module.val_dataloader():
