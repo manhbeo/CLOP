@@ -44,14 +44,6 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     model.projection_head = nn.Identity()
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
-    data_module.setup(stage='fit')
-    min_label = float('inf')  # Initialize to a large value
-    # Check label ranges
-    for batch in data_module.val_dataloader():
-        _, labels = batch
-        min_label = min(min_label, labels.min().item())  # Get the minimum label in the batch
-        if labels.max() < num_classes: print(f"Found out-of-range labels: {labels.max()}")
-    print(f"The minimum label in the validation set is: {min_label}")
 
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir}')
     if dataset == "cifar10": 
@@ -62,6 +54,15 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers):
         num_classes = 1000
     elif dataset == "tiny_imagenet":
         num_classes = 200
+
+    data_module.setup(stage='fit')
+    min_label = float('inf')  # Initialize to a large value
+    # Check label ranges
+    for batch in data_module.val_dataloader():
+        _, labels = batch
+        min_label = min(min_label, labels.min().item())  # Get the minimum label in the batch
+        if labels.max() < num_classes: print(f"Found out-of-range labels: {labels.max()}")
+    print(f"The minimum label in the validation set is: {min_label}")
 
     linear_classifier = LinearClassifier(
         model, batch_size, num_classes=num_classes, freeze_model=True
