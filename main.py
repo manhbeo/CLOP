@@ -90,7 +90,7 @@ def extract_data(dataset):
 
 def test(pretrain_dir, batch_size, dataset, num_workers):
     model = CLOA.load_from_checkpoint(pretrain_dir)
-    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
+    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
 
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Test", name=f'{dataset}-{pretrain_dir}')
 
