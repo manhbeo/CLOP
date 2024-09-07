@@ -3,6 +3,7 @@ from torchvision import models
 import torch.nn as nn
 from OARLoss import OARLoss
 from lightly.loss.ntx_ent_loss import NTXentLoss
+from lightly.loss.barlow_twins_loss import BarlowTwinsLoss
 from supervised import Supervised_NTXentLoss
 import pytorch_lightning as pl
 import torch
@@ -38,7 +39,7 @@ class ResNet50(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, batch_size=128, dataset="cifar100", OAR=True, loss="ntx_ent", devices=1, k=100, distance="cosine", learning_rate=None):
+    def __init__(self, batch_size=128, dataset="tiny_imagenet", OAR=True, loss="ntx_ent", devices=1, k=100, distance="cosine", learning_rate=None):
         super(CLOA, self).__init__()
         self.dataset = dataset
         self.k = k
@@ -70,13 +71,14 @@ class CLOA(pl.LightningModule):
                 temperature = 0.1
                 self.num_classes = 200
                 self.output_dim = 256
+            if self.loss == "nxt_ent":
+                self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
+            elif self.loss == "supcon":
+                self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
+        elif self.loss == "barlow":
+            self.criterion = BarlowTwinsLoss(gather_distributed=True)
 
-        self.OAR = None
-        if self.loss == "nxt_ent":
-            self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
-        elif self.loss == "supcon":
-            self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
-
+        self.OAR = None    
         if OAR:
             self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim, distance=distance)
 
