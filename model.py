@@ -151,11 +151,9 @@ class CLOA(pl.LightningModule):
         z_i = self.forward(x_i)
 
         # Calculate embedding variance
-        # z_i_normalized = nn.functional.normalize(z_i, p=2, dim=1)
-        z_i_normalized = z_i
-        embedding_mean = z_i_normalized.mean(dim=0)
-        embedding_variance = ((z_i_normalized - embedding_mean) ** 2).mean().item()
-        self.log('test_embedding_variance', embedding_variance, batch_size=z_i.size(0), sync_dist=True)
+        z_i_normalized = nn.functional.normalize(z_i, p=2, dim=1)
+        embedding_variance = torch.var(z_i_normalized, dim=0).mean().item()
+        self.log('test_embedding_variance', embedding_variance, sync_dist=True)
         return embedding_variance
 
     
