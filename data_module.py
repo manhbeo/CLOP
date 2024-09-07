@@ -264,8 +264,8 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             self.train_dataset = datasets.ImageNet(self.data_dir, split='train', transform=self.train_transform)
             self.val_dataset =  datasets.ImageNet(self.data_dir, split='val', transform=self.val_transform)
         elif self.dataset == "tiny_imagenet":
-            self.train_dataset = TinyImageNet(self.data_dir, split='train', transform=self.train_transform)
-            self.val_dataset =  TinyImageNet(self.data_dir, split='val', transform=self.val_transform)
+            self.train_dataset = TinyImageNet(self.data_dir, split='train', transform=self.train_transform, download=True)
+            self.val_dataset =  TinyImageNet(self.data_dir, split='val', transform=self.val_transform, download=True)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
