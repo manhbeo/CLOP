@@ -179,6 +179,12 @@ class CustomDataModule(pl.LightningDataModule):
                     transforms.ToTensor(),
                     normalize
                 ])
+            elif augment == "auto_cifar":
+                self.train_transform = transforms.Compose([
+                    transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
+                    transforms.ToTensor(),
+                    normalize
+                ])
 
         self.val_transform = transforms.Compose([
             transforms.Resize(resize_size),
@@ -290,6 +296,12 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                     ], p=0.8),
                     transforms.RandomGrayscale(p=0.2),
                     transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(64 * 0.1)+1, sigma=(0.1, 2.0))], p=0.5),
+                    transforms.ToTensor(),
+                    normalize
+                ])
+            elif augment == "auto_cifar":
+                self.train_transform = transforms.Compose([
+                    transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
                     transforms.ToTensor(),
                     normalize
                 ])
