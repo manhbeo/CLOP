@@ -45,7 +45,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_i
     model.projection_head = nn.Identity()
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment)
 
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir[:-5]}')
     if dataset == "cifar10": 
         num_classes = 10
     elif dataset == "cifar100": 
