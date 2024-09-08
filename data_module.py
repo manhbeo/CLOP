@@ -185,6 +185,13 @@ class CustomDataModule(pl.LightningDataModule):
                     transforms.ToTensor(),
                     normalize
                 ])
+            elif augment == "val":
+                self.train_transform = transforms.Compose([
+                    transforms.Resize(resize_size),
+                    transforms.CenterCrop(crop_size),
+                    transforms.ToTensor(),
+                    normalize
+                ])
 
         self.val_transform = transforms.Compose([
             transforms.Resize(resize_size),
@@ -302,6 +309,13 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             elif augment == "auto_cifar":
                 self.train_transform = transforms.Compose([
                     transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
+                    transforms.ToTensor(),
+                    normalize
+                ])
+            elif augment == "val":
+                self.train_transform = transforms.Compose([
+                    transforms.Resize(resize_size),
+                    transforms.CenterCrop(crop_size),
                     transforms.ToTensor(),
                     normalize
                 ])
