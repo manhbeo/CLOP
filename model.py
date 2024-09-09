@@ -39,7 +39,7 @@ class ResNet50(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, batch_size=128, dataset="tiny_imagenet", OAR=True, loss="supcon", devices=1, k=100, distance="cosine", learning_rate=None):
+    def __init__(self, batch_size=128, dataset="cifar100", OAR=True, loss="supcon", devices=1, k=100, distance="cosine", learning_rate=None):
         super(CLOA, self).__init__()
         self.dataset = dataset
         self.k = k
@@ -84,7 +84,10 @@ class CLOA(pl.LightningModule):
         self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
 
         if learning_rate is None:
-            self.learning_rate = 0.075 * math.sqrt(batch_size*devices)
+            if dataset.startswith("cifar"):
+                self.learning_rate = 0.075 * math.sqrt(batch_size*devices)
+            else:
+                self.learning_rate = 0.3 * (batch_size*devices) / 256
         else:
             self.learning_rate = learning_rate
         self.feature_bank_size = 2048

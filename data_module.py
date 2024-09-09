@@ -99,7 +99,7 @@ class CustomImageNetDataset(Dataset):
 
 
 class CustomDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9, augment="auto_imgnet"):
+    def __init__(self, data_dir='data', batch_size=32, dataset="cifar100", num_workers=9, augment="rand"):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
@@ -144,18 +144,19 @@ class CustomDataModule(pl.LightningDataModule):
             resize_size = 64
             crop_size = 64
             normalize = transforms.Normalize(mean=[0.4802, 0.4481, 0.3975], std=[0.2302, 0.2265, 0.2262])
-            if augment == "fake_simclr":
+            if augment == "sim":
                 self.train_transform = transforms.Compose([
-                    transforms.RandomResizedCrop(64, scale=(0.2, 1.0)),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.RandomApply([
-                        transforms.ColorJitter(0.6, 0.6, 0.6, 0.15)
-                    ], p=0.8),
+                    transforms.RandomResizedCrop(size=64, scale=(0.2, 1.0)),
+                    transforms.RandomHorizontalFlip(p=0.5),
+                    transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
                     transforms.RandomGrayscale(p=0.2),
+                    transforms.GaussianBlur(kernel_size=9, sigma=(0.1, 2.0)),
+                    transforms.RandomSolarize(threshold=128, p=0.1),
                     transforms.ToTensor(),
                     normalize
                 ])
-            elif augment == "auto_imgnet":
+
+            elif augment == "auto":
                 self.train_transform = transforms.Compose([
                     transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.IMAGENET),
                     transforms.ToTensor(),
@@ -164,31 +165,6 @@ class CustomDataModule(pl.LightningDataModule):
             elif augment == "rand":
                 self.train_transform = transforms.Compose([
                     transforms.RandAugment(),
-                    transforms.ToTensor(),
-                    normalize
-                ])
-            elif augment == "sim_imgnet":
-                self.train_transform = transforms.Compose([
-                    transforms.RandomResizedCrop(64),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.RandomApply([
-                        transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
-                    ], p=0.8),
-                    transforms.RandomGrayscale(p=0.2),
-                    transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(64 * 0.1)+1, sigma=(0.1, 2.0))], p=0.5),
-                    transforms.ToTensor(),
-                    normalize
-                ])
-            elif augment == "auto_cifar":
-                self.train_transform = transforms.Compose([
-                    transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
-                    transforms.ToTensor(),
-                    normalize
-                ])
-            elif augment == "val":
-                self.train_transform = transforms.Compose([
-                    transforms.Resize(resize_size),
-                    transforms.CenterCrop(crop_size),
                     transforms.ToTensor(),
                     normalize
                 ])
@@ -268,21 +244,23 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             ])
 
         elif self.dataset == "tiny_imagenet":
+            print(f"Augment type: {self.augment}")
             resize_size = 64
             crop_size = 64
             normalize = transforms.Normalize(mean=[0.4802, 0.4481, 0.3975], std=[0.2302, 0.2265, 0.2262])
-            if augment == "fake_simclr":
+            if augment == "sim":
                 self.train_transform = transforms.Compose([
-                    transforms.RandomResizedCrop(64, scale=(0.2, 1.0)),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.RandomApply([
-                        transforms.ColorJitter(0.6, 0.6, 0.6, 0.15)
-                    ], p=0.8),
+                    transforms.RandomResizedCrop(size=64, scale=(0.2, 1.0)),
+                    transforms.RandomHorizontalFlip(p=0.5),
+                    transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
                     transforms.RandomGrayscale(p=0.2),
+                    transforms.GaussianBlur(kernel_size=9, sigma=(0.1, 2.0)),
+                    transforms.RandomSolarize(threshold=128, p=0.1),
                     transforms.ToTensor(),
                     normalize
                 ])
-            elif augment == "auto_imgnet":
+
+            elif augment == "auto":
                 self.train_transform = transforms.Compose([
                     transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.IMAGENET),
                     transforms.ToTensor(),
@@ -294,24 +272,6 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                     transforms.ToTensor(),
                     normalize
                 ])
-            elif augment == "sim_imgnet":
-                self.train_transform = transforms.Compose([
-                    transforms.RandomResizedCrop(64),
-                    transforms.RandomHorizontalFlip(),
-                    transforms.RandomApply([
-                        transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
-                    ], p=0.8),
-                    transforms.RandomGrayscale(p=0.2),
-                    transforms.RandomApply([transforms.GaussianBlur(kernel_size=int(64 * 0.1)+1, sigma=(0.1, 2.0))], p=0.5),
-                    transforms.ToTensor(),
-                    normalize
-                ])
-            elif augment == "auto_cifar":
-                self.train_transform = transforms.Compose([
-                    transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.CIFAR10),
-                    transforms.ToTensor(),
-                    normalize
-                ])
             elif augment == "val":
                 self.train_transform = transforms.Compose([
                     transforms.Resize(resize_size),
@@ -319,7 +279,6 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                     transforms.ToTensor(),
                     normalize
                 ])
-
 
         self.val_transform = transforms.Compose([
             transforms.Resize(resize_size),
