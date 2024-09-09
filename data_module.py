@@ -146,7 +146,7 @@ class CustomDataModule(pl.LightningDataModule):
             normalize = transforms.Normalize(mean=[0.4802, 0.4481, 0.3975], std=[0.2302, 0.2265, 0.2262])
             if augment == "sim":
                 self.train_transform = transforms.Compose([
-                    transforms.RandomResizedCrop(size=64, scale=(0.2, 1.0)),
+                    transforms.RandomResizedCrop(size=64),
                     transforms.RandomHorizontalFlip(p=0.5),
                     transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
                     transforms.RandomGrayscale(p=0.2),
@@ -250,7 +250,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             normalize = transforms.Normalize(mean=[0.4802, 0.4481, 0.3975], std=[0.2302, 0.2265, 0.2262])
             if augment == "sim":
                 self.train_transform = transforms.Compose([
-                    transforms.RandomResizedCrop(size=64, scale=(0.2, 1.0)),
+                    transforms.RandomResizedCrop(size=64),
                     transforms.RandomHorizontalFlip(p=0.5),
                     transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
                     transforms.RandomGrayscale(p=0.2),
