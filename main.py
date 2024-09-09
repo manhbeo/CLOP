@@ -7,14 +7,14 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch.nn as nn
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_ent", devices=1, k=100, num_workers=9, distance="cosine", augment="auto_imgnet", lr=None):
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_ent", devices=1, k=100, num_workers=9, distance="cosine", augment="auto_imgnet", lr=None, lambda_val=1.0):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOA(batch_size, dataset, OAR, loss, devices, k, distance, lr) #train from scratch, since this something we don't want
+        model = CLOA(batch_size, dataset, OAR, loss, devices, k, distance, lr, lambda_val) #train from scratch, since this something we don't want
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}-dis={distance}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}-aug={augment}')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -37,7 +37,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_
                         deterministic=True)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}-dis={distance}.ckpt')
+    trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}-aug={augment}.ckpt')
 
 
 def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet"):
@@ -113,6 +113,7 @@ if __name__ == '__main__':
     parser.add_argument("--pretrain_dir", type=str)
     parser.add_argument("--batch_size", type=int)
     parser.add_argument("--lr", type=float)
+    parser.add_argument("--lambda_val", type=float)
     parser.add_argument("--devices", type=int, default=1)
     parser.add_argument("-k", type=int, default=100)
     parser.add_argument("--num_workers", type=int, default=9)
@@ -131,4 +132,4 @@ if __name__ == '__main__':
     elif args.test:
         test(args.pretrain_dir, args.batch_size, args.dataset, args.num_workers)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.loss, args.devices, args.k, args.num_workers, args.distance, args.augment, args.lr)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.loss, args.devices, args.k, args.num_workers, args.distance, args.augment, args.lr, args.lambda_val)
