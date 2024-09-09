@@ -13,13 +13,27 @@ import math
 from lightly.utils.scheduler import CosineWarmupScheduler
 import torch.nn.functional as F
 
-class ResNet50_small(nn.Module):
+class ResNet50_cifar(nn.Module):
     def __init__(self):
-        super(ResNet50_small, self).__init__()
+        super(ResNet50_cifar, self).__init__()
         self.resnet50 = models.resnet50(weights=None)
 
         # Modify the initial convolutional layer to better suit CIFAR
         self.resnet50.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        self.resnet50.maxpool = nn.Identity()  # Remove the max pooling
+        self.resnet50.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
+
+    def forward(self, x):
+        x = self.resnet50(x)
+        return F.normalize(x, dim=1)
+    
+class ResNet50_tiny_imgnet(nn.Module):
+    def __init__(self):
+        super(ResNet50_tiny_imgnet, self).__init__()
+        self.resnet50 = models.resnet50(weights=None)
+
+        # Modify the initial convolutional layer to better suit CIFAR
+        self.resnet50.conv1 = nn.Conv2d(3, 64, kernel_size=5, stride=1, padding=2, bias=False)
         self.resnet50.maxpool = nn.Identity()  # Remove the max pooling
         self.resnet50.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
 
@@ -44,14 +58,15 @@ class CLOA(pl.LightningModule):
         self.dataset = dataset
         self.k = k
 
-        if dataset.startswith("cifar") or dataset == "tiny_imagenet":
-            self.encoder = ResNet50_small()
+        if dataset.startswith("cifar"):
+            self.encoder = ResNet50_cifar()
             if dataset == "cifar10": 
                 self.num_classes = 10
             elif dataset == "cifar100": 
                 self.num_classes = 100
-            elif dataset == "tiny_imagenet":
-                self.num_classes = 200
+        elif dataset == "tiny_imagenet":
+            self.encoder = ResNet50_tiny_imgnet()
+            self.num_classes = 200
         elif dataset == "imagenet":
             self.encoder = ResNet50()
             self.num_classes = 1000    
