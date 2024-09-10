@@ -116,7 +116,7 @@ if __name__ == '__main__':
     parser.add_argument("--pretrain_dir", type=str)
     parser.add_argument("--batch_size", type=int)
     parser.add_argument("--lr", type=float)
-    parser.add_argument("--lambda_val", type=float)
+    parser.add_argument("--lambda_val", type=float, default=1.0)
     parser.add_argument("--devices", type=int, default=1)
     parser.add_argument("--nodes", type=int, default=1)
     parser.add_argument("-k", type=int, default=100)
