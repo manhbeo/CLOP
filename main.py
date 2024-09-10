@@ -108,7 +108,7 @@ def test(pretrain_dir, batch_size, dataset, num_workers):
 
 
 if __name__ == '__main__':
-    seed_everything(1234) 
+    seed_everything(123) 
     parser = argparse.ArgumentParser()
     parser.add_argument("--eval", action='store_true')
     parser.add_argument("--test", action='store_true')
