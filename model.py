@@ -53,7 +53,7 @@ class ResNet50(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, batch_size=128, dataset="cifar100", OAR=True, loss="supcon", devices=1, k=100, distance="cosine", learning_rate=None, lambda_val=1.0):
+    def __init__(self, batch_size=128, dataset="tiny_imagenet", OAR=True, loss="supcon", devices=1, k=100, distance="cosine", learning_rate=None, lambda_val=1.0):
         super(CLOA, self).__init__()
         self.dataset = dataset
         self.k = k
