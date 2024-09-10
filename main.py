@@ -130,11 +130,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment, args.node)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment, args.nodes)
     elif args.extract_data:
         extract_data(args.dataset)
     elif args.test:
         test(args.pretrain_dir, args.batch_size, args.dataset, args.num_workers)
     else:
         train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.loss, args.devices, args.k, 
-              args.num_workers, args.distance, args.augment, args.lr, args.lambda_val, args.node)
+              args.num_workers, args.distance, args.augment, args.lr, args.lambda_val, args.nodes)

@@ -27,18 +27,18 @@ class ResNet50_cifar(nn.Module):
         x = self.resnet50(x)
         return F.normalize(x, dim=1)
     
-class ResNet50_tiny_imgnet(nn.Module):
+class ResNet101_tiny_imgnet(nn.Module):
     def __init__(self):
-        super(ResNet50_tiny_imgnet, self).__init__()
-        self.resnet50 = models.resnet50(weights=None)
+        super(ResNet101_tiny_imgnet, self).__init__()
+        self.resnet101 = models.resnet101(weights=None)
 
         # Modify the initial convolutional layer to better suit CIFAR
-        self.resnet50.conv1 = nn.Conv2d(3, 64, kernel_size=5, stride=1, padding=2, bias=False)
-        self.resnet50.maxpool = nn.Identity()  # Remove the max pooling
-        self.resnet50.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
+        self.resnet101.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+        self.resnet101.maxpool = nn.Identity()  # Remove the max pooling
+        self.resnet101.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
 
     def forward(self, x):
-        x = self.resnet50(x)
+        x = self.resnet101(x)
         return F.normalize(x, dim=1)
 
 class ResNet50(nn.Module):
@@ -65,7 +65,7 @@ class CLOA(pl.LightningModule):
             elif dataset == "cifar100": 
                 self.num_classes = 100
         elif dataset == "tiny_imagenet":
-            self.encoder = ResNet50_tiny_imgnet()
+            self.encoder = ResNet101_tiny_imgnet()
             self.num_classes = 200
         elif dataset == "imagenet":
             self.encoder = ResNet50()
