@@ -244,7 +244,6 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
             ])
 
         elif self.dataset == "tiny_imagenet":
-            print(f"Augment type: {self.augment}")
             resize_size = 64
             crop_size = 64
             normalize = transforms.Normalize(mean=[0.4802, 0.4481, 0.3975], std=[0.2302, 0.2265, 0.2262])
