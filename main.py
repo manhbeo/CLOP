@@ -7,7 +7,8 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch.nn as nn
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_ent", devices=1, k=100, num_workers=9, distance="cosine", augment="auto_imgnet", lr=None, lambda_val=1.0):
+def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_ent", devices=1, k=100, num_workers=9, 
+          distance="cosine", augment="auto_imgnet", lr=None, lambda_val=1.0, nodes=1):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
@@ -34,13 +35,14 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_
                         sync_batchnorm=True,
                         use_distributed_sampler=True,
                         callbacks=[checkpoint_callback],
-                        deterministic=True)
+                        deterministic=True,
+                        num_nodes=nodes)
 
     trainer.fit(model, data_module)
     trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}-aug={augment}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet"):
+def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", nodes=1):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     model.projection_head = nn.Identity()
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment)
@@ -79,7 +81,8 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_i
                         sync_batchnorm=True,
                         use_distributed_sampler=True,
                         callbacks=[checkpoint_callback],
-                        deterministic=True)
+                        deterministic=True,
+                        num_nodes=nodes)
     trainer.fit(linear_classifier, datamodule=data_module)
     trainer.save_checkpoint(f'linear_eval-{pretrain_dir}')
 
@@ -115,6 +118,7 @@ if __name__ == '__main__':
     parser.add_argument("--lr", type=float)
     parser.add_argument("--lambda_val", type=float)
     parser.add_argument("--devices", type=int, default=1)
+    parser.add_argument("--nodes", type=int, default=1)
     parser.add_argument("-k", type=int, default=100)
     parser.add_argument("--num_workers", type=int, default=9)
     parser.add_argument("--dataset", type=str)
@@ -126,10 +130,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment, args.node)
     elif args.extract_data:
         extract_data(args.dataset)
     elif args.test:
         test(args.pretrain_dir, args.batch_size, args.dataset, args.num_workers)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.loss, args.devices, args.k, args.num_workers, args.distance, args.augment, args.lr, args.lambda_val)
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.loss, args.devices, args.k, 
+              args.num_workers, args.distance, args.augment, args.lr, args.lambda_val, args.node)
