@@ -65,7 +65,7 @@ class CLOA(pl.LightningModule):
             elif dataset == "cifar100": 
                 self.num_classes = 100
         elif dataset == "tiny_imagenet":
-            self.encoder = ResNet101_tiny_imgnet()
+            self.encoder = ResNet50_cifar()
             self.num_classes = 200
         elif dataset == "imagenet":
             self.encoder = ResNet50()
