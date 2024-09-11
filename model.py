@@ -44,15 +44,14 @@ class CLOA(pl.LightningModule):
         self.dataset = dataset
         self.k = k
 
-        if dataset.startswith("cifar"):
+        if dataset.startswith("cifar") or dataset == "tiny_imagenet":
             self.encoder = ResNet50_cifar()
             if dataset == "cifar10": 
                 self.num_classes = 10
             elif dataset == "cifar100": 
                 self.num_classes = 100
-        elif dataset == "tiny_imagenet":
-            self.encoder = ResNet50_cifar()
-            self.num_classes = 200
+            elif dataset == "tiny_imagenet":
+                self.num_classes = 200
         elif dataset == "imagenet":
             self.encoder = ResNet50()
             self.num_classes = 1000    

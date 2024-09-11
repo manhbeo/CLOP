@@ -60,7 +60,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_i
     data_module.setup(stage='fit')
 
     linear_classifier = LinearClassifier(
-        model, batch_size, num_classes=num_classes, freeze_model=True
+        model, batch_size, num_classes=num_classes, freeze_model=False
     )
 
     checkpoint_callback = ModelCheckpoint(
