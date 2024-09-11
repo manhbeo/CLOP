@@ -26,20 +26,6 @@ class ResNet50_cifar(nn.Module):
     def forward(self, x):
         x = self.resnet50(x)
         return F.normalize(x, dim=1)
-    
-class ResNet101_tiny_imgnet(nn.Module):
-    def __init__(self):
-        super(ResNet101_tiny_imgnet, self).__init__()
-        self.resnet101 = models.resnet101(weights=None)
-
-        # Modify the initial convolutional layer to better suit CIFAR
-        self.resnet101.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.resnet101.maxpool = nn.Identity()  # Remove the max pooling
-        self.resnet101.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
-
-    def forward(self, x):
-        x = self.resnet101(x)
-        return F.normalize(x, dim=1)
 
 class ResNet50(nn.Module):
     def __init__(self):
