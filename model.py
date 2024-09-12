@@ -39,7 +39,8 @@ class ResNet50(nn.Module):
 
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
-    def __init__(self, batch_size=128, dataset="tiny_imagenet", OAR=True, loss="supcon", devices=1, k=100, distance="cosine", learning_rate=None, lambda_val=1.0):
+    def __init__(self, batch_size=128, dataset="tiny_imagenet", OAR=True, loss="supcon", devices=1, k=100, distance="cosine", 
+                 learning_rate=None, lambda_val=1.0):
         super(CLOA, self).__init__()
         self.dataset = dataset
         self.k = k
@@ -48,34 +49,35 @@ class CLOA(pl.LightningModule):
             self.encoder = ResNet50_cifar()
             if dataset == "cifar10": 
                 self.num_classes = 10
+                self.output_dim = 128
             elif dataset == "cifar100": 
                 self.num_classes = 100
+                self.output_dim = 128
             elif dataset == "tiny_imagenet":
                 self.num_classes = 200
+                self.output_dim = 256
         elif dataset == "imagenet":
             self.encoder = ResNet50()
             self.num_classes = 1000    
+            self.output_dim = 1024
+
 
         self.loss = loss
         if self.loss == "ntx_ent" or self.loss == "supcon":
             if dataset == "cifar10": 
                 temperature = 0.5
-                self.output_dim = 128
             elif dataset == "cifar100": 
                 temperature = 0.2
-                self.output_dim = 128
-            elif dataset == "imagenet":
+            elif dataset == "imagenet" or dataset == "tiny_imagenet":
                 temperature = 0.1
-                self.output_dim = 1024
-            elif dataset == "tiny_imagenet":
-                temperature = 0.1
-                self.output_dim = 256
             if self.loss == "nxt_ent":
                 self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
             elif self.loss == "supcon":
                 self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
         elif self.loss == "barlow":
             self.criterion = BarlowTwinsLoss(gather_distributed=True)
+        elif self.loss == "OAR_only":
+            self.criterion = OARLoss(self.num_classes, self.output_dim, lambda_val, distance)
 
         self.OAR = None    
         if OAR:
