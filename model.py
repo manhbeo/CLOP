@@ -40,7 +40,7 @@ class ResNet50(nn.Module):
 # TODO: consider EMA. do experiment with it 
 class CLOA(pl.LightningModule):
     def __init__(self, batch_size=128, dataset="tiny_imagenet", OAR=True, loss="supcon", devices=1, k=100, distance="cosine", 
-                 learning_rate=None, lambda_val=1.0):
+                 learning_rate=None, lambda_val=1.0, label_por=1.0):
         super(CLOA, self).__init__()
         self.dataset = dataset
         self.k = k
@@ -77,7 +77,7 @@ class CLOA(pl.LightningModule):
         elif self.loss == "barlow":
             self.criterion = BarlowTwinsLoss(gather_distributed=True)
         elif self.loss == "OAR_only":
-            self.criterion = OARLoss(self.num_classes, self.output_dim, lambda_val, distance)
+            self.criterion = OARLoss(self.num_classes, self.output_dim, lambda_val, distance, label_por)
 
         self.OAR = None    
         if OAR:

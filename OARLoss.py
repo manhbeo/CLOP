@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.distributed as dist
+import random
 
 class OARLoss(nn.Module):
     """
     Orthogonal Anchor Regression Loss with SVD-initialized anchors. Add this to a (main) loss function
     """
-    def __init__(self, num_classes: int = 100, embedding_dim: int = 128, lambda_value: float = 1.0, distance: str = "cosine"):
+    def __init__(self, num_classes: int = 100, embedding_dim: int = 128, lambda_value: float = 1.0, distance: str = "cosine", label_por=1.0):
         """
         Args:
             num_classes (int): Number of classes, and thus the number of anchors.
@@ -17,6 +18,7 @@ class OARLoss(nn.Module):
         self.embedding_dim = embedding_dim
         self.lambda_value = lambda_value
         self.distance = distance
+        self.label_por = label_por
         
         # Initialize anchors using SVD to ensure they are orthogonal
         random_matrix = torch.randn(num_classes, embedding_dim)
@@ -29,12 +31,13 @@ class OARLoss(nn.Module):
 
     def forward(self, z_i: torch.Tensor, z_j: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
         """
-        Compute the Orthogonal Anchor Regression Loss.
+        Compute the Orthogonal Anchor Regression Loss using a certain percentage of labels.
 
         Args:
             z_i (torch.Tensor): Batch of embeddings, shape (batch_size, embedding_dim)
             z_j (torch.Tensor): Batch of embeddings, shape (batch_size, embedding_dim)
             labels (torch.Tensor): Corresponding labels for each embedding, shape (batch_size,)
+            percentage (float): Percentage of labels to use (value between 0 and 1).
         
         Returns:
             torch.Tensor: The computed loss.
@@ -43,26 +46,43 @@ class OARLoss(nn.Module):
         z_i = nn.functional.normalize(z_i, dim=1)
         z_j = nn.functional.normalize(z_j, dim=1)
         
-        # Gather the corresponding anchors for each embedding in the batch
-        anchors_selected = self.anchors[labels]
+        # Select a percentage of the batch
+        batch_size = labels.size(0)
+        num_selected = int(batch_size * self.label_por)
         
+        if num_selected < batch_size:
+            # Randomly select indices of the batch
+            selected_indices = random.sample(range(batch_size), num_selected)
+            selected_indices = torch.tensor(selected_indices, device=labels.device)
+        else:
+            # Use all indices if percentage is 1.0 or higher
+            selected_indices = torch.arange(batch_size, device=labels.device)
+
+        # Gather the corresponding embeddings and labels
+        z_i_selected = z_i[selected_indices]
+        z_j_selected = z_j[selected_indices]
+        labels_selected = labels[selected_indices]
+        
+        # Gather the corresponding anchors for each selected label
+        anchors_selected = self.anchors[labels_selected]
+
         # Compute cosine similarity
         if self.distance == "cosine": 
-            cosine_similarity = torch.sum(z_i * anchors_selected, dim=1) + torch.sum(z_j * anchors_selected, dim=1)
+            cosine_similarity = torch.sum(z_i_selected * anchors_selected, dim=1) + torch.sum(z_j_selected * anchors_selected, dim=1)
             cosine_similarity /= 2
             # Compute the loss as the mean of (1 - cosine similarity)
             loss = torch.mean(1 - cosine_similarity)
             
         elif self.distance == "euclidean":
             # Euclidean distance
-            euclidean_distance = torch.norm(z_i - anchors_selected, p=2, dim=1) + torch.norm(z_j - anchors_selected, p=2, dim=1)
+            euclidean_distance = torch.norm(z_i_selected - anchors_selected, p=2, dim=1) + torch.norm(z_j_selected - anchors_selected, p=2, dim=1)
             euclidean_distance /= 2
             # Compute the loss as the mean of the Euclidean distance
             loss = torch.mean(euclidean_distance)
 
         elif self.distance == "manhattan":
             # Manhattan distance
-            manhattan_distance = torch.sum(torch.abs(z_i - anchors_selected), dim=1) + torch.sum(torch.abs(z_j - anchors_selected), dim=1)
+            manhattan_distance = torch.sum(torch.abs(z_i_selected - anchors_selected), dim=1) + torch.sum(torch.abs(z_j_selected - anchors_selected), dim=1)
             manhattan_distance /= 2
             # Compute the loss as the mean of the Manhattan distance
             loss = torch.mean(manhattan_distance)
