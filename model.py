@@ -68,6 +68,7 @@ class CLOA(pl.LightningModule):
             elif dataset == "cifar100": 
                 temperature = 0.2
             elif dataset == "imagenet" or dataset == "tiny_imagenet":
+                #TODO: change this
                 temperature = 0.1
             if self.loss == "ntx_ent":
                 self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
