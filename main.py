@@ -60,7 +60,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_i
     data_module.setup(stage='fit')
 
     linear_classifier = LinearClassifier(
-        model, batch_size, num_classes=num_classes
+        model, batch_size, num_classes=num_classes, freeze_model=True
     )
 
     checkpoint_callback = ModelCheckpoint(
@@ -77,7 +77,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_i
                         max_epochs=epochs,
                         devices="auto",
                         accelerator="gpu",
-                        strategy="ddp", #_find_unused_parameters_true",
+                        strategy="ddp_find_unused_parameters_true",
                         sync_batchnorm=True,
                         use_distributed_sampler=True,
                         callbacks=[checkpoint_callback],
