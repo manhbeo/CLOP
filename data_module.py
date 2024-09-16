@@ -147,11 +147,10 @@ class CustomDataModule(pl.LightningDataModule):
             if augment == "sim":
                 self.train_transform = transforms.Compose([
                     transforms.RandomResizedCrop(size=64),
-                    transforms.RandomHorizontalFlip(p=0.5),
+                    transforms.RandomHorizontalFlip(),
                     transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8),
                     transforms.RandomGrayscale(p=0.2),
                     transforms.GaussianBlur(kernel_size=9, sigma=(0.1, 2.0)),
-                    transforms.RandomSolarize(threshold=128, p=0.1),
                     transforms.ToTensor(),
                     normalize
                 ])
