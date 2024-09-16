@@ -66,7 +66,7 @@ class CLOA(pl.LightningModule):
             if dataset == "cifar10": 
                 temperature = 0.5
             elif dataset == "tiny_imagenet":
-                temperature = 0.4
+                temperature = 0.1
             elif dataset == "cifar100": 
                 temperature = 0.2
             elif dataset == "imagenet":
