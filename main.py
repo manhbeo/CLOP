@@ -15,7 +15,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_
         model = CLOA(batch_size, dataset, OAR, loss, devices, k, distance, lr, lambda_val, label_por) #train from scratch, since this something we don't want
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}-lamb={lambda_val}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}-temp=0.4')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -39,7 +39,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_
                         num_nodes=nodes)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}-lamb={lambda_val}.ckpt')
+    trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}-temp=0.4.ckpt')
 
 
 def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", nodes=1):
@@ -60,7 +60,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_i
     data_module.setup(stage='fit')
 
     linear_classifier = LinearClassifier(
-        model, batch_size, num_classes=num_classes, freeze_model=True
+        model, batch_size, num_classes=num_classes#, freeze_model=True
     )
 
     checkpoint_callback = ModelCheckpoint(
@@ -77,7 +77,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_i
                         max_epochs=epochs,
                         devices="auto",
                         accelerator="gpu",
-                        strategy="ddp_find_unused_parameters_true",
+                        strategy="ddp", #_find_unused_parameters_true",
                         sync_batchnorm=True,
                         use_distributed_sampler=True,
                         callbacks=[checkpoint_callback],
