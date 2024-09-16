@@ -139,7 +139,7 @@ class LinearClassifier(LightningModule):
         scheduler = {
             "scheduler": CosineWarmupScheduler(
                 optimizer=optimizer,
-                warmup_epochs=10,
+                warmup_epochs=0,
                 max_epochs=int(self.trainer.estimated_stepping_batches),
             ),
             "interval": "step",
