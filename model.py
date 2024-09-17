@@ -90,10 +90,7 @@ class CLOA(pl.LightningModule):
             if dataset.startswith("cifar"):
                 self.learning_rate = 0.075 * math.sqrt(batch_size*devices)
             elif dataset == "tiny_imagenet":
-                if OAR:
-                    self.learning_rate = 0.7 * (batch_size*devices) / 256
-                else:
-                    self.learning_rate = 0.6 * (batch_size*devices) / 256
+                self.learning_rate = 0.7 * (batch_size*devices) / 256
         else:
             self.learning_rate = learning_rate
         self.feature_bank_size = 2048
