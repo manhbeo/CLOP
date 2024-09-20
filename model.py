@@ -82,7 +82,7 @@ class CLOA(pl.LightningModule):
 
         self.OAR = None    
         if OAR:
-            self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=lambda_val, distance=distance)
+            self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=lambda_val, distance=distance, label_por=label_por)
 
         self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
 
