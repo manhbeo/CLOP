@@ -74,7 +74,7 @@ class CLOA(pl.LightningModule):
             if self.loss == "ntx_ent":
                 self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
             elif self.loss == "supcon":
-                self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True, label_fraction=label_por)
+                self.criterion = Supervised_NTXentLoss(temperature=temperature, label_fraction=label_por, gather_distributed=True)
         elif self.loss == "barlow":
             self.criterion = BarlowTwinsLoss(gather_distributed=True)
         elif self.loss == "OAR_only":

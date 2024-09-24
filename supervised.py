@@ -4,7 +4,7 @@ from lightly.utils import dist
 import torch.nn.functional as F
 
 class Supervised_NTXentLoss(nn.Module):
-    def __init__(self, temperature: float = 0.5, gather_distributed: bool = False, label_fraction: float = 1.0):
+    def __init__(self, temperature: float = 0.5, label_fraction: float = 1.0, gather_distributed: bool = False):
         super(Supervised_NTXentLoss, self).__init__()
         self.temperature = temperature
         self.use_distributed = gather_distributed and dist.world_size() > 1
