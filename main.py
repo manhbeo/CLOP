@@ -8,7 +8,7 @@ from linear_classifier import LinearClassifier
 import torch.nn as nn
 
 def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_ent", devices=1, k=100, num_workers=9, 
-          distance="cosine", augment="auto_imgnet", lr=None, lambda_val=1.0, nodes=1, label_por=1.0):
+          distance="cosine", augment="auto_imgnet", lr=None, lambda_val=1.0, label_por=1.0):
     if pretrain_dir != None:
         model = CLOA.load_from_checkpoint(pretrain_dir)
     else: 
@@ -35,17 +35,16 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_
                         sync_batchnorm=True,
                         use_distributed_sampler=True,
                         callbacks=[checkpoint_callback],
-                        deterministic=True,
-                        num_nodes=nodes)
+                        deterministic=True)
 
     trainer.fit(model, data_module)
     trainer.save_checkpoint(f'{batch_size*devices}-{loss}-oar={OAR}-lamb={lambda_val}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", nodes=1):
+def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", label_por=1.0):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     model.projection_head = nn.Identity()
-    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment)
+    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, subset_fraction=label_por)
 
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir[:-5]}')
     if dataset == "cifar10": 
@@ -60,7 +59,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_i
     data_module.setup(stage='fit')
 
     linear_classifier = LinearClassifier(
-        model, batch_size, num_classes=num_classes#, freeze_model=True
+        model, batch_size, num_classes=num_classes, freeze_model=True
     )
 
     checkpoint_callback = ModelCheckpoint(
@@ -77,12 +76,11 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_i
                         max_epochs=epochs,
                         devices="auto",
                         accelerator="gpu",
-                        strategy="ddp", #_find_unused_parameters_true",
+                        strategy="ddp_find_unused_parameters_true",
                         sync_batchnorm=True,
                         use_distributed_sampler=True,
                         callbacks=[checkpoint_callback],
-                        deterministic=True,
-                        num_nodes=nodes)
+                        deterministic=True)
     trainer.fit(linear_classifier, datamodule=data_module)
     trainer.save_checkpoint(f'linear_eval-{pretrain_dir}')
 
@@ -119,7 +117,6 @@ if __name__ == '__main__':
     parser.add_argument("--lambda_val", type=float, default=1.0)
     parser.add_argument("--label_por", type=float, default=1.0)
     parser.add_argument("--devices", type=int, default=1)
-    parser.add_argument("--nodes", type=int, default=1)
     parser.add_argument("-k", type=int, default=100)
     parser.add_argument("--num_workers", type=int, default=9)
     parser.add_argument("--dataset", type=str)
@@ -131,11 +128,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment, args.nodes)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment)
     elif args.extract_data:
         extract_data(args.dataset)
     elif args.test:
         test(args.pretrain_dir, args.batch_size, args.dataset, args.num_workers)
     else:
         train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.loss, args.devices, args.k, 
-              args.num_workers, args.distance, args.augment, args.lr, args.lambda_val, args.nodes, args.label_por)
+              args.num_workers, args.distance, args.augment, args.lr, args.lambda_val, args.label_por)

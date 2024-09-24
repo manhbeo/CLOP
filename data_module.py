@@ -5,6 +5,8 @@ import pickle
 import pytorch_lightning as pl
 import torch.distributed as dist
 from tinyimagenet import TinyImageNet
+from torch.utils.data import Subset
+import numpy as np
 
 class CustomCIFAR10Dataset(Dataset):
     def __init__(self, root, train=True, transform=None):
@@ -201,11 +203,12 @@ class CustomDataModule(pl.LightningDataModule):
 
 
 class CustomEvaluationDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100", num_workers=9, augment="auto_imgnet"):
+    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100", num_workers=9, augment="auto_imgnet", subset_fraction=1.0):
         super().__init__()
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
         self.dataset = dataset
+        self.subset_fraction = subset_fraction
 
         if self.dataset.startswith("cifar"):
             resize_size = 32
@@ -288,17 +291,24 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
 
     def setup(self, stage):
         if self.dataset == "cifar10":
-            self.train_dataset = datasets.CIFAR10(self.data_dir, train=True, transform=self.train_transform, download=True)
+            train_dataset = datasets.CIFAR10(self.data_dir, train=True, transform=self.train_transform, download=True)
             self.val_dataset = datasets.CIFAR10(self.data_dir, train=False, transform=self.val_transform, download=True)
         elif self.dataset == "cifar100":
-            self.train_dataset = datasets.CIFAR100(self.data_dir, train=True, transform=self.train_transform, download=True)
+            train_dataset = datasets.CIFAR100(self.data_dir, train=True, transform=self.train_transform, download=True)
             self.val_dataset = datasets.CIFAR100(self.data_dir, train=False, transform=self.val_transform, download=True)
         elif self.dataset == "imagenet":
-            self.train_dataset = datasets.ImageNet(self.data_dir, split='train', transform=self.train_transform)
+            train_dataset = datasets.ImageNet(self.data_dir, split='train', transform=self.train_transform)
             self.val_dataset =  datasets.ImageNet(self.data_dir, split='val', transform=self.val_transform)
         elif self.dataset == "tiny_imagenet":
-            self.train_dataset = TinyImageNet(self.data_dir, split='train', transform=self.train_transform, download=True)
+            train_dataset = TinyImageNet(self.data_dir, split='train', transform=self.train_transform, download=True)
             self.val_dataset =  TinyImageNet(self.data_dir, split='val', transform=self.val_transform, download=True)
+
+        if self.subset_fraction < 1.0:
+            num_samples = int(len(train_dataset) * self.subset_fraction)
+            indices = np.random.choice(len(train_dataset), num_samples, replace=False)
+            self.train_dataset = Subset(train_dataset, indices)
+        else:
+            self.train_dataset = train_dataset
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
