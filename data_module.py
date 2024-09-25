@@ -165,7 +165,7 @@ class CustomDataModule(pl.LightningDataModule):
                 ])
             elif augment == "rand":
                 self.train_transform = transforms.Compose([
-                    transforms.RandAugment(),
+                    transforms.RandAugment(num_ops=3, magnitude=18),
                     transforms.ToTensor(),
                     normalize
                 ])
@@ -269,7 +269,7 @@ class CustomEvaluationDataModule(pl.LightningDataModule):
                 ])
             elif augment == "rand":
                 self.train_transform = transforms.Compose([
-                    transforms.RandAugment(),
+                    transforms.RandAugment(num_ops=3, magnitude=18),
                     transforms.ToTensor(),
                     normalize
                 ])
