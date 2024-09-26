@@ -128,7 +128,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment, args.label_por)
     elif args.extract_data:
         extract_data(args.dataset)
     elif args.test:
