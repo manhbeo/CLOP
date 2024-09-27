@@ -38,7 +38,14 @@ class Supervised_NTXentLoss(nn.Module):
         logits_exp = torch.exp(logits)
 
         # Construct a mask for positive samples (label == label, excluding masked labels)
-        positive_mask = (labels_large.unsqueeze(1) == labels_large.unsqueeze(0)) & (labels_large.unsqueeze(1) != -1)
+        positive_mask_labeled = (labels_large.unsqueeze(1) == labels_large.unsqueeze(0)) & (labels_large.unsqueeze(1) != -1)
+
+        # Construct a mask for unlabeled samples (self-pairing for -1 labels)
+        identity_mask = torch.eye(logits.size(0), device=logits.device).bool()  # Ensure self-pairs for same samples
+        positive_mask_unlabeled = (labels_large.unsqueeze(1) == -1) & identity_mask
+
+        # Combine the positive masks: labeled positives and unlabeled self-pairs
+        positive_mask = positive_mask_labeled | positive_mask_unlabeled
 
         # Calculate the logits for positive samples
         positive_logits = logits_exp * positive_mask
