@@ -29,13 +29,14 @@ class OARLoss(nn.Module):
         if dist.is_initialized():
             dist.broadcast(self.anchors, 0)
 
-    def forward(self, z_i: torch.Tensor, z_j: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    def forward(self, z_i: torch.Tensor, z_j: torch.Tensor, z_weak: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
         """
         Compute the Orthogonal Anchor Regression Loss using a certain percentage of labels.
 
         Args:
             z_i (torch.Tensor): Batch of embeddings, shape (batch_size, embedding_dim)
             z_j (torch.Tensor): Batch of embeddings, shape (batch_size, embedding_dim)
+            z_weak (torch.Tensor): Batch of weak embeddings, shape (batch_size, embedding_dim)
             labels (torch.Tensor): Corresponding labels for each embedding, shape (batch_size,)
             percentage (float): Percentage of labels to use (value between 0 and 1).
         
@@ -45,6 +46,7 @@ class OARLoss(nn.Module):
         # Normalize embeddings to unit vectors
         z_i = nn.functional.normalize(z_i, dim=1)
         z_j = nn.functional.normalize(z_j, dim=1)
+        z_weak = nn.functional.normalize(z_weak, dim=1)
         
         # Select a percentage of the batch
         batch_size = labels.size(0)
@@ -61,10 +63,19 @@ class OARLoss(nn.Module):
         # Gather the corresponding embeddings and labels
         z_i_selected = z_i[selected_indices]
         z_j_selected = z_j[selected_indices]
-        labels_selected = labels[selected_indices]
-        
-        # Gather the corresponding anchors for each selected label
-        anchors_selected = self.anchors[labels_selected]
+        if labels is None: 
+            #TODO: Update on every 10 epoch
+            I = torch.diag(z_weak @ (z_i).T)
+
+            sorted_diag, _ = torch.sort(I, descending=True) 
+            num_anchors = max(1, int(0.1 * len(sorted_diag)))
+
+            anchors_selected = sorted_diag[:num_anchors] #TODO: size mismatch. Fix
+
+        else:
+            labels_selected = labels[selected_indices]
+            # Gather the corresponding anchors for each selected label
+            anchors_selected = self.anchors[labels_selected]
 
         # Compute cosine similarity
         if self.distance == "cosine": 

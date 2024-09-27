@@ -1,4 +1,3 @@
-#TODO: code the unsup psuedo-label of this 
 from lightly.models.modules.heads import SimCLRProjectionHead
 from torchvision import models
 import torch.nn as nn
@@ -122,20 +121,23 @@ class CLOA(pl.LightningModule):
         return z
 
     def shared_step(self, batch):
-        (x_i, x_j), fine_label = batch
+        (x_i, x_j, x_weak), fine_label = batch
         z_i = self.forward(x_i)
         z_j = self.forward(x_j)
+        z_weak = self.forward(x_weak) if x_weak is not None else None
 
         if self.loss == "supcon": 
             loss = self.criterion(z_i, z_j, fine_label)
+            if self.OAR != None: 
+                loss += self.OAR(z_i, z_j, None, fine_label)
         else:    
             loss = self.criterion(z_i, z_j)
-        if self.OAR != None: 
-            loss += self.OAR(z_i, z_j, fine_label)
+            if self.OAR != None: 
+                loss += self.OAR(z_i, z_j, z_weak, None)
         return loss
 
     def training_step(self, batch, batch_idx):
-        (x_i, _), fine_label = batch
+        (x_i, _, _), fine_label = batch
         z_i = self.forward(x_i)
         loss = self.shared_step(batch)
         self.log('train_loss', loss, sync_dist=True)
@@ -143,7 +145,7 @@ class CLOA(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        (x_i, _), fine_label = batch
+        (x_i, _, _), fine_label = batch
         z_i = self.forward(x_i)
         k = self.k
 
@@ -157,7 +159,7 @@ class CLOA(pl.LightningModule):
         return loss
 
     def test_step(self, batch, batch_idx):
-        (x_i, _), _ = batch
+        (x_i, _, _), _ = batch
         z_i = self.forward(x_i)
 
         # Calculate embedding variance

@@ -12,6 +12,7 @@ class CustomCIFAR10Dataset(Dataset):
     def __init__(self, root, train=True, transform=None, loss="supcon", weak_transform=None):
         self.transform = transform
         self.weak_transform = weak_transform
+        self.loss = loss
         self.dataset = datasets.CIFAR10(root=root, train=train, download=True)
         file_path = os.path.join(root, 'cifar-10-batches-py', 'data_batch_1' if train else 'test_batch')
         with open(file_path, 'rb') as f:
@@ -23,14 +24,11 @@ class CustomCIFAR10Dataset(Dataset):
         if self.transform is not None:
             img1 = self.transform(img)
             img2 = self.transform(img)
-            if loss != "supcon":
+            img3 = None
+            if self.loss != "supcon":
                 img3 = self.weak_transform(img)
-        else:
-            img1 = img
-            img2 = img
-
-        return (img1, img2), fine_label
-
+        return (img1, img2, img3), fine_label
+                
     def __len__(self):
         return len(self.dataset)
     
@@ -38,6 +36,7 @@ class CustomCIFAR100Dataset(Dataset):
     def __init__(self, root, train=True, transform=None, loss="supcon", weak_transform=None):
         self.transform = transform
         self.weak_transform = weak_transform
+        self.loss = loss
         self.dataset = datasets.CIFAR100(root=root, train=train, download=True)
         file_path = os.path.join(root, 'cifar-100-python', 'train' if train else 'test')
         with open(file_path, 'rb') as f:
@@ -48,13 +47,10 @@ class CustomCIFAR100Dataset(Dataset):
         if self.transform is not None:
             img1 = self.transform(img)
             img2 = self.transform(img)
-            if loss != "supcon":
+            img3 = None
+            if self.loss != "supcon":
                 img3 = self.weak_transform(img)
-        else:
-            img1 = img
-            img2 = img
-
-        return (img1, img2), fine_label
+        return (img1, img2, img3), fine_label
 
     def __len__(self):
         return len(self.dataset)
@@ -66,6 +62,7 @@ class CustomImageNetDataset(Dataset):
         self.split = split
         self.transform = transform
         self.weak_transform = weak_transform
+        self.loss = loss
         
         # Check if the dataset is already extracted
         if not os.path.exists(os.path.join(root, split)):
@@ -95,15 +92,15 @@ class CustomImageNetDataset(Dataset):
         self.labels = self.dataset.targets
 
     def __getitem__(self, index):
-        img, label = self.dataset[index]
+        img, fine_label = self.dataset[index]
         
         if self.transform is not None:
             img1 = self.transform(img)
             img2 = self.transform(img)
-            if loss != "supcon":
+            img3 = None
+            if self.loss != "supcon":
                 img3 = self.weak_transform(img)
-
-        return (img1, img2), label
+        return (img1, img2, img3), fine_label
 
     def __len__(self):
         return len(self.dataset)
@@ -115,6 +112,7 @@ class CustomDataModule(pl.LightningDataModule):
         self.data_dir = data_dir + "_" + dataset
         self.batch_size = batch_size
         self.dataset = dataset
+        self.loss = loss
 
         if self.dataset.startswith("cifar"):
             resize_size = 32
@@ -178,7 +176,7 @@ class CustomDataModule(pl.LightningDataModule):
                     transforms.ToTensor(),
                     normalize
                 ])
-        if loss != "supcon":
+        if self.loss != "supcon":
             self.weak_transform = transforms.Compose([
                 transforms.Resize(resize_size),
                 transforms.CenterCrop(crop_size),
@@ -198,16 +196,17 @@ class CustomDataModule(pl.LightningDataModule):
 
     def setup(self, stage):
         if self.dataset == "cifar10":
-            self.train_dataset = CustomCIFAR10Dataset(self.data_dir, train=True, transform=self.train_transform, loss=loss, weak_transform=self.weak_transform)
+            self.train_dataset = CustomCIFAR10Dataset(self.data_dir, train=True, transform=self.train_transform, loss=self.loss, weak_transform=self.weak_transform)
             self.val_dataset = CustomCIFAR10Dataset(self.data_dir, train=False, transform=self.val_transform)
         elif self.dataset == "cifar100":
-            self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform, loss=loss, weak_transform=self.weak_transform)
+            self.train_dataset = CustomCIFAR100Dataset(self.data_dir, train=True, transform=self.train_transform, loss=self.loss, weak_transform=self.weak_transform)
             self.val_dataset = CustomCIFAR100Dataset(self.data_dir, train=False, transform=self.val_transform)
         elif self.dataset == "imagenet":
-            self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform, dataset="imagenet", loss=loss, weak_transform=self.weak_transform)
+            self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform, dataset="imagenet", loss=self.loss, weak_transform=self.weak_transform)
             self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.val_transform, dataset="imagenet")
         elif self.dataset == "tiny_imagenet":
-            self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform, dataset="tiny_imagenet", loss=loss, weak_transform=self.weak_transform)
+            self.train_dataset = CustomImageNetDataset(self.data_dir, split='train', transform=self.train_transform, dataset="tiny_imagenet", loss=self.loss, 
+                                                       weak_transform=self.weak_transform)
             self.val_dataset =  CustomImageNetDataset(self.data_dir, split='val', transform=self.val_transform, dataset="tiny_imagenet")
 
     def train_dataloader(self):
