@@ -62,7 +62,6 @@ class CustomImageNetDataset(Dataset):
         self.split = split
         self.transform = transform
         self.weak_transform = weak_transform
-        self.loss = loss
         
         # Check if the dataset is already extracted
         if not os.path.exists(os.path.join(root, split)):
