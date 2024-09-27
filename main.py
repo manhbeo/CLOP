@@ -14,7 +14,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_
     else: 
         model = CLOA(batch_size, dataset, OAR, loss, devices, k, distance, lr, lambda_val, label_por) #train from scratch, since this something we don't want
     
-    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment)
+    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, loss=loss)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}-label={label_por}')
 
     checkpoint_callback = ModelCheckpoint(
