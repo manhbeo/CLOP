@@ -24,7 +24,7 @@ class CustomCIFAR10Dataset(Dataset):
         if self.transform is not None:
             img1 = self.transform(img)
             img2 = self.transform(img)
-            img3 = img
+            img3 = self.transform(img)
             if self.weak_transform is not None:
                 img3 = self.weak_transform(img)
         return (img1, img2, img3), fine_label
@@ -47,7 +47,7 @@ class CustomCIFAR100Dataset(Dataset):
         if self.transform is not None:
             img1 = self.transform(img)
             img2 = self.transform(img)
-            img3 = img
+            img3 = self.transform(img)
             if self.weak_transform is not None:
                 img3 = self.weak_transform(img)
         return (img1, img2, img3), fine_label
@@ -96,7 +96,7 @@ class CustomImageNetDataset(Dataset):
         if self.transform is not None:
             img1 = self.transform(img)
             img2 = self.transform(img)
-            img3 = img
+            img3 = self.transform(img)
             if self.weak_transform is not None:
                 img3 = self.weak_transform(img)
         return (img1, img2, img3), fine_label
