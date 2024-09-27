@@ -124,7 +124,6 @@ class CLOA(pl.LightningModule):
         (x_i, x_j, x_weak), fine_label = batch
         z_i = self.forward(x_i)
         z_j = self.forward(x_j)
-        z_weak = self.forward(x_weak) if x_weak is not None else None
 
         if self.loss == "supcon": 
             loss = self.criterion(z_i, z_j, fine_label)
@@ -133,6 +132,7 @@ class CLOA(pl.LightningModule):
         else:    
             loss = self.criterion(z_i, z_j)
             if self.OAR != None: 
+                z_weak = self.forward(x_weak)
                 loss += self.OAR(z_i, z_j, z_weak, None)
         return loss
 
