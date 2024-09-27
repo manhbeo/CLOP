@@ -37,7 +37,7 @@ class OARLoss(nn.Module):
             z_i (torch.Tensor): Batch of embeddings, shape (batch_size, embedding_dim)
             z_j (torch.Tensor): Batch of embeddings, shape (batch_size, embedding_dim)
             z_weak (torch.Tensor): Batch of weak embeddings, shape (batch_size, embedding_dim)
-            labels (torch.Tensor): Corresponding labels for each embedding, shape (batch_size,)
+            labels (torch.Tensor): Corresponding labels for each embedding, shape (batch_size,) or None if loss is "supcon"
             percentage (float): Percentage of labels to use (value between 0 and 1).
         
         Returns:
@@ -49,7 +49,7 @@ class OARLoss(nn.Module):
         z_weak = nn.functional.normalize(z_weak, dim=1)
         
         # Select a percentage of the batch
-        batch_size = labels.size(0)
+        batch_size = z_i.size(0)
         num_selected = int(batch_size * self.label_por)
         
         if num_selected < batch_size:
