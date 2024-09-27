@@ -67,10 +67,10 @@ class OARLoss(nn.Module):
             #TODO: Update on every 10 epoch
             I = torch.diag(z_weak @ (z_i).T)
 
-            sorted_diag, _ = torch.sort(I, descending=True) 
-            num_anchors = max(1, int(0.1 * len(sorted_diag)))
+            sorted_I, _ = torch.sort(I, descending=True) 
+            num_anchors = max(1, int(0.1 * len(sorted_I)))
 
-            anchors_selected = sorted_diag[:num_anchors] #TODO: size mismatch. Fix
+            anchors_selected = sorted_I[:num_anchors] #TODO: size mismatch. Fix
 
         else:
             labels_selected = labels[selected_indices]
