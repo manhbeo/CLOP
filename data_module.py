@@ -185,7 +185,7 @@ class CustomDataModule(pl.LightningDataModule):
                 transforms.ToTensor(),
                 normalize
             ])
-        else self.weak_transform = None
+        else: self.weak_transform = None
 
         self.val_transform = transforms.Compose([
             transforms.Resize(resize_size),
