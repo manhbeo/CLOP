@@ -44,7 +44,7 @@ class Supervised_NTXentLoss(nn.Module):
         positive_logits = logits_exp * positive_mask
 
         # Calculate the sum of the exponentiated logits for all samples (the denominator in the softmax)
-        all_logits_sum = logits_exp.sum(dim=1, keepdim=True)
+        all_logits_sum = logits_exp.sum(dim=1, keepdim=True) + 1e-8
 
         # Avoid divide-by-zero by ensuring at least one positive sample per instance
         positive_sum = positive_logits.sum(dim=1)
