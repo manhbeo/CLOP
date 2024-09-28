@@ -46,8 +46,7 @@ class OARLoss(nn.Module):
         # Normalize embeddings to unit vectors
         z_i = nn.functional.normalize(z_i, dim=1)
         z_j = nn.functional.normalize(z_j, dim=1)
-        z_weak = nn.functional.normalize(z_weak, dim=1)
-        
+                
         # Select a percentage of the batch
         batch_size = z_i.size(0)
         num_selected = int(batch_size * self.label_por)
@@ -65,6 +64,7 @@ class OARLoss(nn.Module):
         z_j_selected = z_j[selected_indices]
         if labels is None: 
             #TODO: Update on every 10 epoch
+            z_weak = nn.functional.normalize(z_weak, dim=1)
             I = torch.diag(z_weak @ (z_i).T)
 
             sorted_I, _ = torch.sort(I, descending=True) 
