@@ -120,7 +120,7 @@ class CLOA(pl.LightningModule):
         z = self.projection_head(h)
         return z
 
-    def shared_step(self, batch):
+    def shared_step(self, batch, label_por=None):
         (x_i, x_j, x_weak), fine_label = batch
         z_i = self.forward(x_i)
         z_j = self.forward(x_j)
@@ -128,7 +128,7 @@ class CLOA(pl.LightningModule):
         if self.loss == "supcon": 
             loss = self.criterion(z_i, z_j, fine_label)
             if self.OAR != None: 
-                loss += self.OAR(z_i, z_j, None, fine_label)
+                loss += self.OAR(z_i, z_j, None, fine_label, label_por)
         else:    
             loss = self.criterion(z_i, z_j)
             if self.OAR != None: 
@@ -154,7 +154,7 @@ class CLOA(pl.LightningModule):
         knn_acc = correct / x_i.size(0)
         self.log(f'knn_acc-k={k}', knn_acc, batch_size=x_i.size(0), sync_dist=True)
 
-        loss = self.shared_step(batch)
+        loss = self.shared_step(batch, 1.0)
         self.log('val_loss', loss, sync_dist=True)
         return loss
 

@@ -29,7 +29,7 @@ class OARLoss(nn.Module):
         if dist.is_initialized():
             dist.broadcast(self.anchors, 0)
 
-    def forward(self, z_i: torch.Tensor, z_j: torch.Tensor, z_weak: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    def forward(self, z_i: torch.Tensor, z_j: torch.Tensor, z_weak: torch.Tensor, labels: torch.Tensor, label_por=None) -> torch.Tensor:
         """
         Compute the Orthogonal Anchor Regression Loss using a certain percentage of labels.
 
@@ -49,7 +49,10 @@ class OARLoss(nn.Module):
                 
         # Select a percentage of the batch
         batch_size = z_i.size(0)
-        num_selected = int(batch_size * self.label_por)
+        if label_por == None:
+            num_selected = int(batch_size * self.label_por)
+        else: 
+            num_selected = int(batch_size * label_por)
         
         if num_selected < batch_size:
             # Randomly select indices of the batch
