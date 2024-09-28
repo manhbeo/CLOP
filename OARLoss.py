@@ -67,6 +67,7 @@ class OARLoss(nn.Module):
         z_j_selected = z_j[selected_indices]
         if labels is None: 
             #TODO: Update on every 10 epoch
+            #TODO: do k-means here
             z_weak = nn.functional.normalize(z_weak, dim=1)
             I = torch.diag(z_weak @ (z_i).T)
 
