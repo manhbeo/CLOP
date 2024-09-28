@@ -12,7 +12,6 @@ class CustomCIFAR10Dataset(Dataset):
     def __init__(self, root, train=True, transform=None, weak_transform=None):
         self.transform = transform
         self.weak_transform = weak_transform
-        self.loss = loss
         self.dataset = datasets.CIFAR10(root=root, train=train, download=True)
         file_path = os.path.join(root, 'cifar-10-batches-py', 'data_batch_1' if train else 'test_batch')
         with open(file_path, 'rb') as f:
@@ -36,7 +35,6 @@ class CustomCIFAR100Dataset(Dataset):
     def __init__(self, root, train=True, transform=None, weak_transform=None):
         self.transform = transform
         self.weak_transform = weak_transform
-        self.loss = loss
         self.dataset = datasets.CIFAR100(root=root, train=train, download=True)
         file_path = os.path.join(root, 'cifar-100-python', 'train' if train else 'test')
         with open(file_path, 'rb') as f:
