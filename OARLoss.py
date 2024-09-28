@@ -67,43 +67,74 @@ class OARLoss(nn.Module):
         z_j_selected = z_j[selected_indices]
         if labels is None: 
             #TODO: Update on every 10 epoch
-            #TODO: do k-means here
+            # find the nearest anchors and assign the label of that anchor to the points
             z_weak = nn.functional.normalize(z_weak, dim=1)
-            I = torch.diag(z_weak @ (z_i).T)
 
-            sorted_I, _ = torch.sort(I, descending=True) 
-            num_anchors = max(1, int(0.1 * len(sorted_I)))
+            I_i = torch.diag(z_weak @ (z_i).T)
+            sorted_I_i, _ = torch.sort(I_i, descending=True) 
+            num_anchors = max(1, int(0.1 * len(sorted_I_i)))
+            anchors_i = z_i[sorted_I_i[:num_anchors]] 
 
-            anchors_selected = sorted_I[:num_anchors] #TODO: size mismatch. Fix
+
+            distances = torch.cdist(z_i, anchors_i, p=2)  # Compute pairwise Euclidean distances
+            # Step 2: Find the index of the nearest anchor for each point
+            nearest_anchor_indices = torch.argmin(distances, dim=1)
+            # Step 3: Assign the nearest anchor to each point
+            anchors_selected_i = anchors_i[nearest_anchor_indices]
+
+            I_j = torch.diag(z_weak @ (z_j).T)
+            sorted_I_j, _ = torch.sort(I_j, descending=True) 
+            anchors_j = z_j[sorted_I_j[:num_anchors]] 
+
+            # Compute cosine similarity
+            if self.distance == "cosine": 
+                cosine_similarity = torch.sum(z_i_selected * anchors_selected, dim=1) + torch.sum(z_j_selected * anchors_selected, dim=1)
+                cosine_similarity /= 2
+                # Compute the loss as the mean of (1 - cosine similarity)
+                loss = torch.mean(1 - cosine_similarity)
+                
+            elif self.distance == "euclidean":
+                # Euclidean distance
+                euclidean_distance = torch.norm(z_i_selected - anchors_selected, p=2, dim=1) + torch.norm(z_j_selected - anchors_selected, p=2, dim=1)
+                euclidean_distance /= 2
+                # Compute the loss as the mean of the Euclidean distance
+                loss = torch.mean(euclidean_distance)
+
+            elif self.distance == "manhattan":
+                # Manhattan distance
+                manhattan_distance = torch.sum(torch.abs(z_i_selected - anchors_selected), dim=1) + torch.sum(torch.abs(z_j_selected - anchors_selected), dim=1)
+                manhattan_distance /= 2
+                # Compute the loss as the mean of the Manhattan distance
+                loss = torch.mean(manhattan_distance)
 
         else:
             labels_selected = labels[selected_indices]
             # Gather the corresponding anchors for each selected label
             anchors_selected = self.anchors[labels_selected]
 
-        # Compute cosine similarity
-        if self.distance == "cosine": 
-            cosine_similarity = torch.sum(z_i_selected * anchors_selected, dim=1) + torch.sum(z_j_selected * anchors_selected, dim=1)
-            cosine_similarity /= 2
-            # Compute the loss as the mean of (1 - cosine similarity)
-            loss = torch.mean(1 - cosine_similarity)
-            
-        elif self.distance == "euclidean":
-            # Euclidean distance
-            euclidean_distance = torch.norm(z_i_selected - anchors_selected, p=2, dim=1) + torch.norm(z_j_selected - anchors_selected, p=2, dim=1)
-            euclidean_distance /= 2
-            # Compute the loss as the mean of the Euclidean distance
-            loss = torch.mean(euclidean_distance)
+            # Compute cosine similarity
+            if self.distance == "cosine": 
+                cosine_similarity = torch.sum(z_i_selected * anchors_selected, dim=1) + torch.sum(z_j_selected * anchors_selected, dim=1)
+                cosine_similarity /= 2
+                # Compute the loss as the mean of (1 - cosine similarity)
+                loss = torch.mean(1 - cosine_similarity)
+                
+            elif self.distance == "euclidean":
+                # Euclidean distance
+                euclidean_distance = torch.norm(z_i_selected - anchors_selected, p=2, dim=1) + torch.norm(z_j_selected - anchors_selected, p=2, dim=1)
+                euclidean_distance /= 2
+                # Compute the loss as the mean of the Euclidean distance
+                loss = torch.mean(euclidean_distance)
 
-        elif self.distance == "manhattan":
-            # Manhattan distance
-            manhattan_distance = torch.sum(torch.abs(z_i_selected - anchors_selected), dim=1) + torch.sum(torch.abs(z_j_selected - anchors_selected), dim=1)
-            manhattan_distance /= 2
-            # Compute the loss as the mean of the Manhattan distance
-            loss = torch.mean(manhattan_distance)
+            elif self.distance == "manhattan":
+                # Manhattan distance
+                manhattan_distance = torch.sum(torch.abs(z_i_selected - anchors_selected), dim=1) + torch.sum(torch.abs(z_j_selected - anchors_selected), dim=1)
+                manhattan_distance /= 2
+                # Compute the loss as the mean of the Manhattan distance
+                loss = torch.mean(manhattan_distance)
+
 
         loss *= self.lambda_value
-        
         # Use distributed reduce to average the loss across all processes
         if dist.is_initialized():
             dist.all_reduce(loss, op=dist.ReduceOp.SUM)
