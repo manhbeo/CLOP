@@ -137,7 +137,7 @@ class LinearClassifier(LightningModule):
         if not self.freeze_model:
             parameters += self.model.parameters()
         optimizer = LARS(self.parameters(), 
-                         lr=0.3 * self.batch_size_per_device * self.trainer.world_size / 256 if self.lr is not None else self.lr)
+                         lr=0.3 * self.batch_size_per_device * self.trainer.world_size / 256 if self.lr is None else self.lr)
         scheduler = {
             "scheduler": CosineWarmupScheduler(
                 optimizer=optimizer,
