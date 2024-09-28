@@ -41,7 +41,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_
     trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}-label={label_por}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", label_por=1.0):
+def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", label_por=1.0, lr=None):
     model = CLOA.load_from_checkpoint(pretrain_dir)
     model.projection_head = nn.Identity()
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, subset_fraction=label_por)
@@ -59,7 +59,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_i
     data_module.setup(stage='fit')
 
     linear_classifier = LinearClassifier(
-        model, batch_size, num_classes=num_classes, freeze_model=True
+        model, batch_size, num_classes=num_classes, freeze_model=True, lr=lr
     )
 
     checkpoint_callback = ModelCheckpoint(
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.eval:
-        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment, args.label_por)
+        eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment, args.label_por, args.lr)
     elif args.extract_data:
         extract_data(args.dataset)
     elif args.test:

@@ -67,7 +67,6 @@ class OARLoss(nn.Module):
         z_j_selected = z_j[selected_indices]
         if labels is None: 
             #TODO: Update on every 10 epoch
-            # find the nearest anchors and assign the label of that anchor to the points
             z_weak = nn.functional.normalize(z_weak, dim=1)
 
             I_i = torch.diag(z_weak @ (z_i).T)
@@ -75,34 +74,51 @@ class OARLoss(nn.Module):
             num_anchors = max(1, int(0.1 * len(sorted_I_i)))
             anchors_i = z_i[sorted_I_i[:num_anchors]] 
 
-
-            distances = torch.cdist(z_i, anchors_i, p=2)  # Compute pairwise Euclidean distances
-            # Step 2: Find the index of the nearest anchor for each point
-            nearest_anchor_indices = torch.argmin(distances, dim=1)
-            # Step 3: Assign the nearest anchor to each point
-            anchors_selected_i = anchors_i[nearest_anchor_indices]
-
             I_j = torch.diag(z_weak @ (z_j).T)
             sorted_I_j, _ = torch.sort(I_j, descending=True) 
             anchors_j = z_j[sorted_I_j[:num_anchors]] 
 
             # Compute cosine similarity
             if self.distance == "cosine": 
-                cosine_similarity = torch.sum(z_i_selected * anchors_selected, dim=1) + torch.sum(z_j_selected * anchors_selected, dim=1)
+                cosine_sim_i = torch.matmul(z_i, anchors_i.T) 
+                nearest_anchor_indices_i = torch.argmax(cosine_sim_i, dim=1)
+                anchors_selected_i = anchors_i[nearest_anchor_indices_i]
+
+                cosine_sim_j = torch.matmul(z_j, anchors_j.T) 
+                nearest_anchor_indices_j = torch.argmax(cosine_sim_j, dim=1)
+                anchors_selected_j = anchors_j[nearest_anchor_indices_j]
+
+                cosine_similarity = torch.sum(z_i_selected * anchors_selected_i, dim=1) + torch.sum(z_j_selected * anchors_selected_j, dim=1)
                 cosine_similarity /= 2
                 # Compute the loss as the mean of (1 - cosine similarity)
                 loss = torch.mean(1 - cosine_similarity)
                 
             elif self.distance == "euclidean":
+                distances_i = torch.cdist(z_i, anchors_i, p=2)  
+                nearest_anchor_indices_i = torch.argmin(distances_i, dim=1)
+                anchors_selected_i = anchors_i[nearest_anchor_indices_i]
+
+                distances_j = torch.cdist(z_j, anchors_j, p=2)  
+                nearest_anchor_indices_j = torch.argmin(distances_j, dim=1)
+                anchors_selected_j = anchors_j[nearest_anchor_indices_j]
+
                 # Euclidean distance
-                euclidean_distance = torch.norm(z_i_selected - anchors_selected, p=2, dim=1) + torch.norm(z_j_selected - anchors_selected, p=2, dim=1)
+                euclidean_distance = torch.norm(z_i_selected - anchors_selected_i, p=2, dim=1) + torch.norm(z_j_selected - anchors_selected_j, p=2, dim=1)
                 euclidean_distance /= 2
                 # Compute the loss as the mean of the Euclidean distance
                 loss = torch.mean(euclidean_distance)
 
             elif self.distance == "manhattan":
+                distances_i = torch.cdist(z_i, anchors_i, p=1)  
+                nearest_anchor_indices_i = torch.argmin(distances_i, dim=1)
+                anchors_selected_i = anchors_i[nearest_anchor_indices_i]
+
+                distances_j = torch.cdist(z_j, anchors_j, p=1)  
+                nearest_anchor_indices_j = torch.argmin(distances_j, dim=1)
+                anchors_selected_j = anchors_j[nearest_anchor_indices_j]
+
                 # Manhattan distance
-                manhattan_distance = torch.sum(torch.abs(z_i_selected - anchors_selected), dim=1) + torch.sum(torch.abs(z_j_selected - anchors_selected), dim=1)
+                manhattan_distance = torch.sum(torch.abs(z_i_selected - anchors_selected_i), dim=1) + torch.sum(torch.abs(z_j_selected - anchors_selected_j), dim=1)
                 manhattan_distance /= 2
                 # Compute the loss as the mean of the Manhattan distance
                 loss = torch.mean(manhattan_distance)
