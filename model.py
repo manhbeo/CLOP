@@ -128,12 +128,12 @@ class CLOA(pl.LightningModule):
         if self.loss == "supcon": 
             loss = self.criterion(z_i, z_j, fine_label)
             if self.OAR != None: 
-                loss += self.OAR(z_i, z_j, None, fine_label, label_por)
+                loss += self.OAR(z_i, z_j, None, fine_label, label_por, None)
         else:    
             loss = self.criterion(z_i, z_j)
             if self.OAR != None: 
                 z_weak = self.forward(x_weak)
-                loss += self.OAR(z_i, z_j, z_weak, None)
+                loss += self.OAR(z_i, z_j, z_weak, None, self.current_epoch)
         return loss
 
     def training_step(self, batch, batch_idx):

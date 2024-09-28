@@ -29,7 +29,7 @@ class OARLoss(nn.Module):
         if dist.is_initialized():
             dist.broadcast(self.anchors, 0)
 
-    def forward(self, z_i: torch.Tensor, z_j: torch.Tensor, z_weak: torch.Tensor, labels: torch.Tensor, label_por=None) -> torch.Tensor:
+    def forward(self, z_i: torch.Tensor, z_j: torch.Tensor, z_weak: torch.Tensor, labels: torch.Tensor, label_por=None, current_epoch=None) -> torch.Tensor:
         """
         Compute the Orthogonal Anchor Regression Loss using a certain percentage of labels.
 
@@ -80,13 +80,16 @@ class OARLoss(nn.Module):
 
             # Compute cosine similarity
             if self.distance == "cosine": 
-                cosine_sim_i = torch.matmul(z_i, anchors_i.T) 
-                nearest_anchor_indices_i = torch.argmax(cosine_sim_i, dim=1)
-                anchors_selected_i = anchors_i[nearest_anchor_indices_i]
+                anchors_selected_i = None
+                anchors_selected_j = None
+                if current_epoch % 10 == 0: 
+                    cosine_sim_i = torch.matmul(z_i, anchors_i.T) 
+                    nearest_anchor_indices_i = torch.argmax(cosine_sim_i, dim=1)
+                    anchors_selected_i = anchors_i[nearest_anchor_indices_i]
 
-                cosine_sim_j = torch.matmul(z_j, anchors_j.T) 
-                nearest_anchor_indices_j = torch.argmax(cosine_sim_j, dim=1)
-                anchors_selected_j = anchors_j[nearest_anchor_indices_j]
+                    cosine_sim_j = torch.matmul(z_j, anchors_j.T) 
+                    nearest_anchor_indices_j = torch.argmax(cosine_sim_j, dim=1)
+                    anchors_selected_j = anchors_j[nearest_anchor_indices_j]
 
                 cosine_similarity = torch.sum(z_i_selected * anchors_selected_i, dim=1) + torch.sum(z_j_selected * anchors_selected_j, dim=1)
                 cosine_similarity /= 2
@@ -94,13 +97,16 @@ class OARLoss(nn.Module):
                 loss = torch.mean(1 - cosine_similarity)
                 
             elif self.distance == "euclidean":
-                distances_i = torch.cdist(z_i, anchors_i, p=2)  
-                nearest_anchor_indices_i = torch.argmin(distances_i, dim=1)
-                anchors_selected_i = anchors_i[nearest_anchor_indices_i]
+                anchors_selected_i = None
+                anchors_selected_j = None
+                if current_epoch % 10 == 0: 
+                    distances_i = torch.cdist(z_i, anchors_i, p=2)  
+                    nearest_anchor_indices_i = torch.argmin(distances_i, dim=1)
+                    anchors_selected_i = anchors_i[nearest_anchor_indices_i]
 
-                distances_j = torch.cdist(z_j, anchors_j, p=2)  
-                nearest_anchor_indices_j = torch.argmin(distances_j, dim=1)
-                anchors_selected_j = anchors_j[nearest_anchor_indices_j]
+                    distances_j = torch.cdist(z_j, anchors_j, p=2)  
+                    nearest_anchor_indices_j = torch.argmin(distances_j, dim=1)
+                    anchors_selected_j = anchors_j[nearest_anchor_indices_j]
 
                 # Euclidean distance
                 euclidean_distance = torch.norm(z_i_selected - anchors_selected_i, p=2, dim=1) + torch.norm(z_j_selected - anchors_selected_j, p=2, dim=1)
@@ -109,13 +115,16 @@ class OARLoss(nn.Module):
                 loss = torch.mean(euclidean_distance)
 
             elif self.distance == "manhattan":
-                distances_i = torch.cdist(z_i, anchors_i, p=1)  
-                nearest_anchor_indices_i = torch.argmin(distances_i, dim=1)
-                anchors_selected_i = anchors_i[nearest_anchor_indices_i]
+                anchors_selected_i = None
+                anchors_selected_j = None
+                if current_epoch % 10 == 0: 
+                    distances_i = torch.cdist(z_i, anchors_i, p=1)  
+                    nearest_anchor_indices_i = torch.argmin(distances_i, dim=1)
+                    anchors_selected_i = anchors_i[nearest_anchor_indices_i]
 
-                distances_j = torch.cdist(z_j, anchors_j, p=1)  
-                nearest_anchor_indices_j = torch.argmin(distances_j, dim=1)
-                anchors_selected_j = anchors_j[nearest_anchor_indices_j]
+                    distances_j = torch.cdist(z_j, anchors_j, p=1)  
+                    nearest_anchor_indices_j = torch.argmin(distances_j, dim=1)
+                    anchors_selected_j = anchors_j[nearest_anchor_indices_j]
 
                 # Manhattan distance
                 manhattan_distance = torch.sum(torch.abs(z_i_selected - anchors_selected_i), dim=1) + torch.sum(torch.abs(z_j_selected - anchors_selected_j), dim=1)
