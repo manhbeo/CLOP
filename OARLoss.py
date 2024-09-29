@@ -57,10 +57,10 @@ class OARLoss(nn.Module):
         if num_selected < batch_size:
             # Randomly select indices of the batch
             selected_indices = random.sample(range(batch_size), num_selected)
-            selected_indices = torch.tensor(selected_indices, device=labels.device)
+            selected_indices = torch.tensor(selected_indices, device=z_i.device)
         else:
             # Use all indices if percentage is 1.0 or higher
-            selected_indices = torch.arange(batch_size, device=labels.device)
+            selected_indices = torch.arange(batch_size, device=z_i.device)
 
         # Gather the corresponding embeddings and labels
         z_i_selected = z_i[selected_indices]
