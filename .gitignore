@@ -10,3 +10,4 @@ plotting.ipynb
 fig
 .vscode
 *.jpg
+.DS_Store
