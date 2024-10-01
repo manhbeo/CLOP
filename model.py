@@ -1,7 +1,7 @@
 from lightly.models.modules.heads import SimCLRProjectionHead
 from torchvision import models
 import torch.nn as nn
-from OARLoss import OARLoss
+from CLOPLoss import CLOPLoss
 from lightly.loss.ntx_ent_loss import NTXentLoss
 from lightly.loss.barlow_twins_loss import BarlowTwinsLoss
 from supervised import Supervised_NTXentLoss
@@ -13,40 +13,56 @@ import math
 from lightly.utils.scheduler import CosineWarmupScheduler
 import torch.nn.functional as F
 
-class ResNet50_cifar(nn.Module):
+class ResNet50_small(nn.Module):
+    '''
+        ResNet50 with modification to suit contrastive learning on Cifar and Tiny-ImageNet
+    '''
     def __init__(self):
         super(ResNet50_cifar, self).__init__()
         self.resnet50 = models.resnet50(weights=None)
-
-        # Modify the initial convolutional layer to better suit CIFAR
         self.resnet50.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.resnet50.maxpool = nn.Identity()  # Remove the max pooling
-        self.resnet50.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
-
+        self.resnet50.maxpool = nn.Identity()  
+        self.resnet50.fc = nn.Identity()  
     def forward(self, x):
         x = self.resnet50(x)
         return F.normalize(x, dim=1)
 
 class ResNet50(nn.Module):
+    '''
+        ResNet50 with modification to suit contrastive learning on ImageNet
+    '''
     def __init__(self):
         super(ResNet50, self).__init__()
         self.resnet50 = models.resnet50(weights=None)
-        self.resnet50.fc = nn.Identity()  # Remove the final fully connected layer for SimCLR
-
+        self.resnet50.fc = nn.Identity()  
     def forward(self, x):
         x = self.resnet50(x)
         return F.normalize(x, dim=1)
 
-# TODO: consider EMA. do experiment with it 
-class CLOA(pl.LightningModule):
-    def __init__(self, batch_size=128, dataset="tiny_imagenet", OAR=True, loss="supcon", devices=1, k=100, distance="cosine", 
+class CLOP(pl.LightningModule):
+    def __init__(self, batch_size=128, dataset="tiny_imagenet", CLOP=True, loss="supcon", devices=1, k=100, distance="cosine", 
                  learning_rate=None, lambda_val=1.0, label_por=1.0):
-        super(CLOA, self).__init__()
+        '''
+        Parameters:
+        - batch_size (int): Batch size
+        - dataset (str): The name of the dataset to be used ('cifar100', 'cifar10', 'tiny_imagenet', 'imagenet'). 
+        - CLOP (bool): A boolean flag indicating whether to use the CLOP loss.
+        - loss (str): The loss function to be used ('ntx_ent' for unsupervised contrastive loss, 'supcon' for supervised contrastive loss). 
+        - devices (int): The number of GPUs to be used. 
+        - k (int): The number of nearest neighbors for k-NN accuracy validation
+        - distance (str): The distance metric to be used 
+                          ('cosine' for cosine similarity, 'euclidean' for Euclidean distance, "manhattan" for Manhattan distance)
+        - learning_rate (float or None): The learning rate for the optimizer. 
+                                         If None, a default learning rate of 0.3 * (batch_size/256) is used. 
+        - lambda_val (float): The weighting factor for CLOP loss.
+        - label_por (float): The proportion of labeled data to be used on contrastive learning.
+        '''
+        super(CLOP, self).__init__()
         self.dataset = dataset
         self.k = k
 
         if dataset.startswith("cifar") or dataset == "tiny_imagenet":
-            self.encoder = ResNet50_cifar()
+            self.encoder = ResNet50_small()
             if dataset == "cifar10": 
                 self.num_classes = 10
                 self.output_dim = 128
@@ -77,12 +93,12 @@ class CLOA(pl.LightningModule):
                 self.criterion = Supervised_NTXentLoss(temperature=temperature, label_fraction=label_por, gather_distributed=True)
         elif self.loss == "barlow":
             self.criterion = BarlowTwinsLoss(gather_distributed=True)
-        elif self.loss == "OAR_only":
-            self.criterion = OARLoss(self.num_classes, self.output_dim, lambda_val, distance, label_por)
+        elif self.loss == "CLOP_only":
+            self.criterion = CLOPLoss(self.num_classes, self.output_dim, lambda_val, distance, label_por)
 
-        self.OAR = None    
-        if OAR:
-            self.OAR = OARLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=lambda_val, distance=distance, label_por=label_por)
+        self.CLOP = None    
+        if CLOP:
+            self.CLOP = CLOPLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=lambda_val, distance=distance, label_por=label_por)
 
         self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
 
@@ -127,13 +143,13 @@ class CLOA(pl.LightningModule):
 
         if self.loss == "supcon": 
             loss = self.criterion(z_i, z_j, fine_label)
-            if self.OAR != None: 
-                loss += self.OAR(z_i, z_j, None, fine_label, label_por, None)
+            if self.CLOP != None: 
+                loss += self.CLOP(z_i, z_j, None, fine_label, label_por, None)
         else:    
             loss = self.criterion(z_i, z_j)
-            if self.OAR != None: 
+            if self.CLOP != None: 
                 z_weak = self.forward(x_weak)
-                loss += self.OAR(z_i, z_j, z_weak, None, self.current_epoch)
+                loss += self.CLOP(z_i, z_j, z_weak, None, self.current_epoch)
         return loss
 
     def training_step(self, batch, batch_idx):
@@ -157,17 +173,6 @@ class CLOA(pl.LightningModule):
         loss = self.shared_step(batch, 1.0)
         self.log('val_loss', loss, sync_dist=True)
         return loss
-
-    def test_step(self, batch, batch_idx):
-        (x_i, _, _), _ = batch
-        z_i = self.forward(x_i)
-
-        # Calculate embedding variance
-        z_i_normalized = nn.functional.normalize(z_i, p=2, dim=1)
-        embedding_variance = torch.var(z_i_normalized, dim=0).mean().item()
-        self.log('test_embedding_variance', embedding_variance, sync_dist=True)
-        return embedding_variance
-
     
     def configure_optimizers(self):
         optimizer = LARS(self.parameters(), lr=self.learning_rate, weight_decay=1e-6)
@@ -176,11 +181,9 @@ class CLOA(pl.LightningModule):
                 warmup_epochs=0 if self.dataset.startswith("cifar") else 10,
                 max_epochs=int(self.trainer.estimated_stepping_batches),
             )
-
         scheduler_config = {
             "scheduler": self.scheduler,
             "interval": "epoch",  
             "frequency": 1
         }
-        
         return [optimizer], [scheduler_config]

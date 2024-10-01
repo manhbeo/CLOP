@@ -1,4 +1,4 @@
-from model import CLOA
+from model import CLOP
 from data_module import CustomDataModule, CustomEvaluationDataModule
 from pytorch_lightning.callbacks import ModelCheckpoint
 import pytorch_lightning as pl
@@ -7,15 +7,15 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch.nn as nn
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_ent", devices=1, k=100, num_workers=9, 
+def train(epochs, batch_size, dataset, pretrain_dir = None, CLOP=True, loss="nxt_ent", devices=1, k=100, num_workers=9, 
           distance="cosine", augment="auto_imgnet", lr=None, lambda_val=1.0, label_por=1.0):
     if pretrain_dir != None:
-        model = CLOA.load_from_checkpoint(pretrain_dir)
+        model = CLOP.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOA(batch_size, dataset, OAR, loss, devices, k, distance, lr, lambda_val, label_por) #train from scratch, since this something we don't want
+        model = CLOP(batch_size, dataset, CLOP, loss, devices, k, distance, lr, lambda_val, label_por) 
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, loss=loss)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-oar={OAR}-label={label_por}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOP_Train", name=f'{dataset}-{batch_size*devices}-CLOP={CLOP}-label={label_por}')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -38,15 +38,15 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, OAR=True, loss="nxt_
                         deterministic=True)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'{batch_size*devices}-oar={OAR}-label={label_por}.ckpt')
+    trainer.save_checkpoint(f'{batch_size*devices}-CLOP={CLOP}-label={label_por}.ckpt')
 
 
 def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", label_por=1.0, lr=None):
-    model = CLOA.load_from_checkpoint(pretrain_dir)
+    model = CLOP.load_from_checkpoint(pretrain_dir)
     model.projection_head = nn.Identity()
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, subset_fraction=label_por)
 
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir[:-5]}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOP_Eval", name=f'{dataset}-{pretrain_dir[:-5]}')
     if dataset == "cifar10": 
         num_classes = 10
     elif dataset == "cifar100": 
@@ -89,27 +89,11 @@ def extract_data(dataset):
     data_module = CustomDataModule(batch_size=32, dataset=dataset)
     data_module.setup(stage="fit")
 
-def test(pretrain_dir, batch_size, dataset, num_workers):
-    model = CLOA.load_from_checkpoint(pretrain_dir)
-    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers)
-
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Test", name=f'{dataset}-{pretrain_dir}')
-
-    trainer = pl.Trainer(logger=wandb_logger,
-                        devices="auto",
-                        accelerator="gpu",
-                        strategy="ddp_find_unused_parameters_true",
-                        sync_batchnorm=True,
-                        use_distributed_sampler=True,
-                        deterministic=True)
-    trainer.test(model, datamodule=data_module)
-
 
 if __name__ == '__main__':
     seed_everything(123) 
     parser = argparse.ArgumentParser()
     parser.add_argument("--eval", action='store_true')
-    parser.add_argument("--test", action='store_true')
     parser.add_argument("--epochs", type=int)
     parser.add_argument("--pretrain_dir", type=str)
     parser.add_argument("--batch_size", type=int)
@@ -123,7 +107,7 @@ if __name__ == '__main__':
     parser.add_argument("--distance", type=str, default="cosine")
     parser.add_argument("--augment", type=str)
     parser.add_argument("--loss", type=str)
-    parser.add_argument("--OAR", action='store_true')
+    parser.add_argument("--CLOP", action='store_true')
     parser.add_argument("--extract_data", action='store_true')
     args = parser.parse_args()
 
@@ -131,8 +115,6 @@ if __name__ == '__main__':
         eval(args.pretrain_dir, args.batch_size, args.epochs, args.dataset, args.num_workers, args.augment, args.label_por, args.lr)
     elif args.extract_data:
         extract_data(args.dataset)
-    elif args.test:
-        test(args.pretrain_dir, args.batch_size, args.dataset, args.num_workers)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.OAR, args.loss, args.devices, args.k, 
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.CLOP, args.loss, args.devices, args.k, 
               args.num_workers, args.distance, args.augment, args.lr, args.lambda_val, args.label_por)

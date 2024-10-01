@@ -20,11 +20,10 @@ class LinearClassifier(LightningModule):
         freeze_model: bool = False,
         lr=None
     ) -> None:
-        """Linear classifier for benchmarking.
+        '''
+        Linear classifier for benchmarking.
 
-        Settings based on SimCLR [0].
-
-        - [0]: https://arxiv.org/abs/2002.05709
+        Adapt from the lightly library: https://github.com/lightly-ai/lightly/blob/master/lightly/utils/benchmarking/linear_classifier.py
 
         Args:
             model:
@@ -42,43 +41,8 @@ class LinearClassifier(LightningModule):
                 If True, the model is frozen and only the classification head is
                 trained. This corresponds to the linear eval setting. Set to False for
                 finetuning.
-
-        Examples:
-
-            >>> from pytorch_lightning import Trainer
-            >>> from torch import nn
-            >>> import torchvision
-            >>> from lightly.models import LinearClassifier
-            >>> from lightly.modles.modules import SimCLRProjectionHead
-            >>>
-            >>> class SimCLR(nn.Module):
-            >>>     def __init__(self):
-            >>>         super().__init__()
-            >>>         self.backbone = torchvision.models.resnet18()
-            >>>         self.backbone.fc = nn.Identity() # Ignore classification layer
-            >>>         self.projection_head = SimCLRProjectionHead(512, 512, 128)
-            >>>
-            >>>     def forward(self, x):
-            >>>         # Forward must return image features.
-            >>>         features = self.backbone(x).flatten(start_dim=1)
-            >>>         return features
-            >>>
-            >>> # Initialize a model.
-            >>> model = SimCLR()
-            >>>
-            >>> # Wrap it with a LinearClassifier.
-            >>> linear_classifier = LinearClassifier(
-            >>>     model,
-            >>>     batch_size=256,
-            >>>     num_classes=10,
-            >>>     freeze_model=True, # linear evaluation, set to False for finetune
-            >>> )
-            >>>
-            >>> # Train the linear classifier.
-            >>> trainer = Trainer(max_epochs=90)
-            >>> trainer.fit(linear_classifier, train_dataloader, val_dataloader)
-
-        """
+        '''
+        
         super().__init__()
         self.save_hyperparameters(ignore="model")
 

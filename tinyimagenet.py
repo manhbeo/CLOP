@@ -106,3 +106,4 @@ class TinyImageNet(ImageFolder):
 if __name__ == '__main__':
     train_dataset = TinyImageNet(root = '../datasets/', split = 'train', download = True)
     test_dataset = TinyImageNet(root = '../datasets/', split = 'val', download = True)
+

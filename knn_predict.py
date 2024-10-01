@@ -1,12 +1,10 @@
 import torch
 
 def knn_predict(feature, feature_bank, feature_labels, classes, knn_k, knn_t):
-    """Helper method to run kNN predictions on features based on a feature bank, normalizing each feature to unit length."""
-
-    # Normalize feature to unit length
+    '''
+    Helper method to run kNN predictions on features based on a feature bank, normalizing each feature to unit length.
+    '''
     feature = feature / (feature.norm(dim=1, keepdim=True) + 1e-6)
-
-    # Normalize feature bank to unit length
     feature_bank = feature_bank / (feature_bank.norm(dim=1, keepdim=True) + 1e-6)
 
     # Compute cosine similarity between each feature vector and feature bank ---> [B, N]
