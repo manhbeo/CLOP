@@ -15,7 +15,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, has_CLOP=True, loss=
         model = CLOP(batch_size, dataset, has_CLOP, loss, devices, k, distance, lr, lambda_val, label_por) 
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, loss=loss)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOP_Train", name=f'{dataset}-{batch_size*devices}-{loss}-CLOP={has_CLOP}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-{loss}-CLOP={has_CLOP}')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -46,7 +46,7 @@ def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_i
     model.projection_head = nn.Identity()
     data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, subset_fraction=label_por)
 
-    wandb_logger = pl.loggers.WandbLogger(project="CLOP_Eval", name=f'{dataset}-{pretrain_dir[:-5]}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir[:-5]}')
     if dataset == "cifar10": 
         num_classes = 10
     elif dataset == "cifar100": 
