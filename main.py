@@ -7,15 +7,15 @@ from pytorch_lightning import seed_everything
 from linear_classifier import LinearClassifier
 import torch.nn as nn
 
-def train(epochs, batch_size, dataset, pretrain_dir = None, CLOP=True, loss="nxt_ent", devices=1, k=100, num_workers=9, 
+def train(epochs, batch_size, dataset, pretrain_dir = None, has_CLOP=True, loss="nxt_ent", devices=1, k=100, num_workers=9, 
           distance="cosine", augment="auto_imgnet", lr=None, lambda_val=1.0, label_por=1.0):
     if pretrain_dir != None:
         model = CLOP.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOP(batch_size, dataset, CLOP, loss, devices, k, distance, lr, lambda_val, label_por) 
+        model = CLOP(batch_size, dataset, has_CLOP, loss, devices, k, distance, lr, lambda_val, label_por) 
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, loss=loss)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOP_Train", name=f'{dataset}-{batch_size*devices}-{loss}-CLOP={CLOP}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOP_Train", name=f'{dataset}-{batch_size*devices}-{loss}-CLOP={has_CLOP}')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -38,7 +38,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, CLOP=True, loss="nxt
                         deterministic=True)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'{batch_size*devices}-{loss}--CLOP={CLOP}.ckpt')
+    trainer.save_checkpoint(f'{batch_size*devices}-{loss}--CLOP={has_CLOP}.ckpt')
 
 
 def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", label_por=1.0, lr=None):
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     parser.add_argument("--distance", type=str, default="cosine")
     parser.add_argument("--augment", type=str)
     parser.add_argument("--loss", type=str)
-    parser.add_argument("--CLOP", action='store_true')
+    parser.add_argument("--has_CLOP", action='store_true')
     parser.add_argument("--extract_data", action='store_true')
     args = parser.parse_args()
 
@@ -116,5 +116,5 @@ if __name__ == '__main__':
     elif args.extract_data:
         extract_data(args.dataset)
     else:
-        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.CLOP, args.loss, args.devices, args.k, 
+        train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.has_CLOP, args.loss, args.devices, args.k, 
               args.num_workers, args.distance, args.augment, args.lr, args.lambda_val, args.label_por)
