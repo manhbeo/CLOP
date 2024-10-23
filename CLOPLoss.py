@@ -87,8 +87,7 @@ class CLOPLoss(nn.Module):
                     nearest_anchor_indices_j = torch.argmax(cosine_sim_j, dim=1)
                     self.anchors_selected_j = anchors_j[nearest_anchor_indices_j]
 
-                cosine_similarity = torch.sum(z_i_selected * self.anchors_selected_i, dim=1) + 
-                                        torch.sum(z_j_selected * self.anchors_selected_j, dim=1)
+                cosine_similarity = torch.sum(z_i_selected * self.anchors_selected_i, dim=1) + torch.sum(z_j_selected * self.anchors_selected_j, dim=1)
                 cosine_similarity /= 2
                 loss = torch.mean(1 - cosine_similarity)
                 
@@ -103,8 +102,7 @@ class CLOPLoss(nn.Module):
                     nearest_anchor_indices_j = torch.argmin(distances_j, dim=1)
                     self.anchors_selected_j = anchors_j[nearest_anchor_indices_j]
 
-                euclidean_distance = torch.norm(z_i_selected - self.anchors_selected_i, p=2, dim=1) + 
-                                        torch.norm(z_j_selected - self.anchors_selected_j, p=2, dim=1)
+                euclidean_distance = torch.norm(z_i_selected - self.anchors_selected_i, p=2, dim=1) + torch.norm(z_j_selected - self.anchors_selected_j, p=2, dim=1)
                 euclidean_distance /= 2
                 loss = torch.mean(euclidean_distance)
 
@@ -119,8 +117,7 @@ class CLOPLoss(nn.Module):
                     nearest_anchor_indices_j = torch.argmin(distances_j, dim=1)
                     self.anchors_selected_j = anchors_j[nearest_anchor_indices_j]
 
-                manhattan_distance = torch.sum(torch.abs(z_i_selected - self.anchors_selected_i), dim=1) + 
-                                        torch.sum(torch.abs(z_j_selected - self.anchors_selected_j), dim=1)
+                manhattan_distance = torch.sum(torch.abs(z_i_selected - self.anchors_selected_i), dim=1) + torch.sum(torch.abs(z_j_selected - self.anchors_selected_j), dim=1)
                 manhattan_distance /= 2
                 loss = torch.mean(manhattan_distance)
 
