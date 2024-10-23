@@ -18,7 +18,7 @@ class ResNet50_small(nn.Module):
         ResNet50 with modification to suit contrastive learning on Cifar and Tiny-ImageNet
     '''
     def __init__(self):
-        super(ResNet50_cifar, self).__init__()
+        super(ResNet50_small, self).__init__()
         self.resnet50 = models.resnet50(weights=None)
         self.resnet50.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
         self.resnet50.maxpool = nn.Identity()  
