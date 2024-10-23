@@ -15,7 +15,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, has_CLOP=True, loss=
         model = CLOP(batch_size, dataset, has_CLOP, loss, devices, k, distance, lr, lambda_val, label_por) 
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, loss=loss)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-{loss}-CLOP={has_CLOP}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-{loss}-dis={distance}')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -38,7 +38,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, has_CLOP=True, loss=
                         deterministic=True)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'{batch_size*devices}-{loss}--CLOP={has_CLOP}.ckpt')
+    trainer.save_checkpoint(f'{batch_size*devices}-{loss}-dis={distance}.ckpt')
 
 
 def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", label_por=1.0, lr=None):
