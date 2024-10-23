@@ -40,13 +40,13 @@ class ResNet50(nn.Module):
         return F.normalize(x, dim=1)
 
 class CLOP(pl.LightningModule):
-    def __init__(self, batch_size=128, dataset="tiny_imagenet", CLOP=True, loss="supcon", devices=1, k=100, distance="cosine", 
+    def __init__(self, batch_size=128, dataset="tiny_imagenet", has_CLOP=True, loss="supcon", devices=1, k=100, distance="cosine", 
                  learning_rate=None, lambda_val=1.0, label_por=1.0):
         '''
         Parameters:
         - batch_size (int): Batch size
         - dataset (str): The name of the dataset to be used ('cifar100', 'cifar10', 'tiny_imagenet', 'imagenet'). 
-        - CLOP (bool): A boolean flag indicating whether to use the CLOP loss.
+        - has_CLOP (bool): A boolean flag indicating whether to use the CLOP loss.
         - loss (str): The loss function to be used ('ntx_ent' for unsupervised contrastive loss, 'supcon' for supervised contrastive loss). 
         - devices (int): The number of GPUs to be used. 
         - k (int): The number of nearest neighbors for k-NN accuracy validation
@@ -96,9 +96,9 @@ class CLOP(pl.LightningModule):
         elif self.loss == "CLOP_only":
             self.criterion = CLOPLoss(self.num_classes, self.output_dim, lambda_val, distance, label_por)
 
-        self.CLOP = None    
-        if CLOP:
-            self.CLOP = CLOPLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=lambda_val, distance=distance, label_por=label_por)
+        self.has_CLOP = None    
+        if has_CLOP:
+            self.CLOPLoss = CLOPLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=lambda_val, distance=distance, label_por=label_por)
 
         self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
 
@@ -143,13 +143,13 @@ class CLOP(pl.LightningModule):
 
         if self.loss == "supcon": 
             loss = self.criterion(z_i, z_j, fine_label)
-            if self.CLOP != None: 
-                loss += self.CLOP(z_i, z_j, None, fine_label, label_por, None)
+            if self.has_CLOP != None: 
+                loss += self.CLOPLoss(z_i, z_j, None, fine_label, label_por, None)
         else:    
             loss = self.criterion(z_i, z_j)
-            if self.CLOP != None: 
+            if self.has_CLOP != None: 
                 z_weak = self.forward(x_weak)
-                loss += self.CLOP(z_i, z_j, z_weak, None, self.current_epoch)
+                loss += self.CLOPLoss(z_i, z_j, z_weak, None, self.current_epoch)
         return loss
 
     def training_step(self, batch, batch_idx):
