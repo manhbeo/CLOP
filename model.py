@@ -149,7 +149,7 @@ class CLOP(pl.LightningModule):
             loss = self.criterion(z_i, z_j)
             if self.has_CLOP != None: 
                 z_weak = self.forward(x_weak)
-                loss += self.CLOPLoss(z_i, z_j, z_weak, None, self.current_epoch)
+                loss += self.CLOPLoss(z_i, z_j, z_weak, None, current_epoch=self.current_epoch)
         return loss
 
     def training_step(self, batch, batch_idx):
