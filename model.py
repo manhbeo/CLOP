@@ -40,8 +40,8 @@ class ResNet50(nn.Module):
         return F.normalize(x, dim=1)
 
 class CLOP(pl.LightningModule):
-    def __init__(self, batch_size=128, dataset="tiny_imagenet", has_CLOP=True, loss="supcon", devices=1, k=100, distance="cosine", 
-                 learning_rate=None, lambda_val=1.0, label_por=1.0):
+    def __init__(self, batch_size=128, dataset="cifar100", has_CLOP=True, loss="supcon", devices=1, k=100, distance="cosine",
+                 learning_rate=None, lambda_val=1.0, label_por=1.0, etf=False):
         '''
         Parameters:
         - batch_size (int): Batch size
@@ -84,17 +84,15 @@ class CLOP(pl.LightningModule):
             elif dataset == "tiny_imagenet":
                 temperature = 0.1
             elif dataset == "cifar100": 
-                temperature = 0.2
+                temperature = 0.5
             elif dataset == "imagenet":
                 temperature = 0.1
             if self.loss == "ntx_ent":
                 self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
             elif self.loss == "supcon":
                 self.criterion = Supervised_NTXentLoss(temperature=temperature, label_fraction=label_por, gather_distributed=True)
-        elif self.loss == "barlow":
-            self.criterion = BarlowTwinsLoss(gather_distributed=True)
         elif self.loss == "CLOP_only":
-            self.criterion = CLOPLoss(self.num_classes, self.output_dim, lambda_val, distance, label_por)
+            self.criterion = CLOPLoss(self.num_classes, self.output_dim, lambda_val, distance, label_por, etf)
 
         self.has_CLOP = None    
         if has_CLOP:
@@ -148,8 +146,8 @@ class CLOP(pl.LightningModule):
         else:    
             loss = self.criterion(z_i, z_j)
             if self.has_CLOP != None: 
-                z_weak = self.forward(x_weak)
-                loss += self.CLOPLoss(z_i, z_j, z_weak, None, current_epoch=self.current_epoch)
+                # z_weak = self.forward(x_weak)
+                loss += self.CLOPLoss(z_i, z_j, None, current_epoch=self.current_epoch)
         return loss
 
     def training_step(self, batch, batch_idx):
