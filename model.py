@@ -135,7 +135,7 @@ class CLOP(pl.LightningModule):
         return z
 
     def shared_step(self, batch, label_por=None):
-        (x_i, x_j, x_weak), fine_label = batch
+        (x_i, x_j), fine_label = batch
         z_i = self.forward(x_i)
         z_j = self.forward(x_j)
 
