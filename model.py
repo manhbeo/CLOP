@@ -84,7 +84,7 @@ class CLOP(pl.LightningModule):
             elif dataset == "tiny_imagenet":
                 temperature = 0.1
             elif dataset == "cifar100": 
-                temperature = 0.5
+                temperature = 0.2
             elif dataset == "imagenet":
                 temperature = 0.1
             if self.loss == "ntx_ent":
