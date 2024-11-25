@@ -151,7 +151,7 @@ class CLOP(pl.LightningModule):
         return loss
 
     def training_step(self, batch, batch_idx):
-        (x_i, _, _), fine_label = batch
+        (x_i, _), fine_label = batch
         z_i = self.forward(x_i)
         loss = self.shared_step(batch)
         self.log('train_loss', loss, sync_dist=True)
@@ -159,7 +159,7 @@ class CLOP(pl.LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        (x_i, _, _), fine_label = batch
+        (x_i, _), fine_label = batch
         z_i = self.forward(x_i)
         k = self.k
 
