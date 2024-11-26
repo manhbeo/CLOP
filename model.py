@@ -152,6 +152,7 @@ class CLOP(pl.LightningModule):
             loss = self.criterion(z_i, z_j)
             if self.semi_loss is not None:
                 loss += self.semi_loss(z_i, z_j, fine_label)
+                loss /= 2
         else:    
             loss = self.criterion(z_i, z_j)
             if self.has_CLOP != None: 
