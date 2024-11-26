@@ -109,7 +109,7 @@ class CLOP(pl.LightningModule):
             if dataset.startswith("cifar"):
                 if self.loss == "supcon":
                     self.learning_rate = 0.075 * math.sqrt(batch_size*devices)
-                elif self.loss == "ntx_ent":
+                else:
                     self.learning_rate = 0.3 * (batch_size*devices) / 256
             elif dataset == "tiny_imagenet":
                 self.learning_rate = 0.3 * (batch_size*devices) / 256
