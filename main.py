@@ -8,14 +8,14 @@ from linear_classifier import LinearClassifier
 import torch.nn as nn
 
 def train(epochs, batch_size, dataset, pretrain_dir = None, has_CLOP=True, loss="nxt_ent", devices=1, k=100, num_workers=9, 
-          distance="cosine", augment="auto_imgnet", lr=None, lambda_val=1.0, label_por=1.0, etf=False):
+          distance="cosine", augment="auto_imgnet", lr=None, lambda_val=1.0, label_por=1.0, etf=False, semi=False):
     if pretrain_dir != None:
         model = CLOP.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOP(batch_size, dataset, has_CLOP, loss, devices, k, distance, lr, lambda_val, label_por, etf)
+        model = CLOP(batch_size, dataset, has_CLOP, loss, devices, k, distance, lr, lambda_val, label_por, etf, semi)
     
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, loss=loss)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-{loss}-dis={distance}') 
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-{loss}')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -38,7 +38,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, has_CLOP=True, loss=
                         deterministic=True)
 
     trainer.fit(model, data_module)
-    trainer.save_checkpoint(f'{batch_size*devices}-{loss}-dis={distance}.ckpt')
+    trainer.save_checkpoint(f'{batch_size*devices}-{loss}.ckpt')
 
 
 def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", label_por=1.0, lr=None):
@@ -110,6 +110,7 @@ if __name__ == '__main__':
     parser.add_argument("--has_CLOP", action='store_true')
     parser.add_argument("--extract_data", action='store_true')
     parser.add_argument("--etf", action='store_true')
+    parser.add_argument("--semi", action='store_true')
     args = parser.parse_args()
 
     if args.eval:
@@ -118,4 +119,4 @@ if __name__ == '__main__':
         extract_data(args.dataset)
     else:
         train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.has_CLOP, args.loss, args.devices, args.k, 
-              args.num_workers, args.distance, args.augment, args.lr, args.lambda_val, args.label_por, args.etf)
+              args.num_workers, args.distance, args.augment, args.lr, args.lambda_val, args.label_por, args.etf, args.semi)

@@ -3,7 +3,7 @@ from torchvision import models
 import torch.nn as nn
 from CLOPLoss import CLOPLoss
 from lightly.loss.ntx_ent_loss import NTXentLoss
-from lightly.loss.barlow_twins_loss import BarlowTwinsLoss
+from lightly.loss.vicreg_loss import VICRegLoss
 from supervised import Supervised_NTXentLoss
 import pytorch_lightning as pl
 import torch
@@ -41,7 +41,7 @@ class ResNet50(nn.Module):
 
 class CLOP(pl.LightningModule):
     def __init__(self, batch_size=128, dataset="cifar100", has_CLOP=True, loss="supcon", devices=1, k=100, distance="cosine",
-                 learning_rate=None, lambda_val=1.0, label_por=1.0, etf=False):
+                 learning_rate=None, lambda_val=1.0, label_por=1.0, etf=False, semi=False):
         '''
         Parameters:
         - batch_size (int): Batch size
@@ -78,6 +78,7 @@ class CLOP(pl.LightningModule):
             self.output_dim = 1024
 
         self.loss = loss
+        self.semi_loss = None
         if self.loss == "ntx_ent" or self.loss == "supcon":
             if dataset == "cifar10": 
                 temperature = 0.5
@@ -91,6 +92,10 @@ class CLOP(pl.LightningModule):
                 self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
             elif self.loss == "supcon":
                 self.criterion = Supervised_NTXentLoss(temperature=temperature, label_fraction=label_por, gather_distributed=True)
+            elif self.loss == "vicreg":
+                self.criterion = VICRegLoss(gather_distributed=True)
+                if semi:
+                    self.semi_loss = Supervised_NTXentLoss(temperature=temperature, label_fraction=label_por, gather_distributed=True)
         elif self.loss == "CLOP_only":
             self.criterion = CLOPLoss(self.num_classes, self.output_dim, lambda_val, distance, label_por, etf)
 
@@ -143,6 +148,10 @@ class CLOP(pl.LightningModule):
             loss = self.criterion(z_i, z_j, fine_label)
             if self.has_CLOP != None: 
                 loss += self.CLOPLoss(z_i, z_j, None, fine_label, label_por, None)
+        elif self.loss == "vicreg":
+            loss = self.criterion(z_i, z_j)
+            if self.semi_loss is not None:
+                loss += self.semi_loss(z_i, z_j, fine_label)
         else:    
             loss = self.criterion(z_i, z_j)
             if self.has_CLOP != None: 
