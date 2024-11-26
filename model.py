@@ -79,7 +79,7 @@ class CLOP(pl.LightningModule):
 
         self.loss = loss
         self.semi_loss = None
-        if self.loss == "ntx_ent" or self.loss == "supcon":
+        if self.loss != "CLOP_only":
             if dataset == "cifar10": 
                 temperature = 0.5
             elif dataset == "tiny_imagenet":
@@ -96,7 +96,7 @@ class CLOP(pl.LightningModule):
                 self.criterion = VICRegLoss(gather_distributed=True)
                 if semi:
                     self.semi_loss = Supervised_NTXentLoss(temperature=temperature, label_fraction=label_por, gather_distributed=True)
-        elif self.loss == "CLOP_only":
+        else:
             self.criterion = CLOPLoss(self.num_classes, self.output_dim, lambda_val, distance, label_por, etf)
 
         self.has_CLOP = None    
