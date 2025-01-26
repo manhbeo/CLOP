@@ -102,14 +102,14 @@ class LARS(Optimizer):
 
                 param_state = self.state[p]
 
-                # TODO: get param names
+                # TODO.txt: get param names
                 # if self._use_weight_decay(param_name):
                 grad += self.weight_decay * param
 
                 if self.classic_momentum:
                     trust_ratio = 1.0
 
-                    # TODO: get param names
+                    # TODO.txt: get param names
                     # if self._do_layer_adaptation(param_name):
                     w_norm = torch.norm(param)
                     g_norm = torch.norm(grad)

@@ -91,17 +91,17 @@ class CLOP(pl.LightningModule):
             if self.loss == "ntx_ent":
                 self.criterion = NTXentLoss(temperature=temperature, gather_distributed=True)
             elif self.loss == "supcon":
-                self.criterion = Supervised_NTXentLoss(temperature=temperature, label_fraction=label_por, gather_distributed=True)
+                self.criterion = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
             elif self.loss == "vicreg":
                 self.criterion = VICRegLoss(gather_distributed=True)
                 if semi:
-                    self.semi_loss = Supervised_NTXentLoss(temperature=temperature, label_fraction=label_por, gather_distributed=True)
+                    self.semi_loss = Supervised_NTXentLoss(temperature=temperature, gather_distributed=True)
         else:
             self.criterion = CLOPLoss(self.num_classes, self.output_dim, lambda_val, distance, label_por, etf)
 
         self.has_CLOP = None    
         if has_CLOP:
-            self.CLOPLoss = CLOPLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=lambda_val, distance=distance, label_por=label_por)
+            self.CLOPLoss = CLOPLoss(self.num_classes, embedding_dim=self.output_dim, lambda_value=lambda_val, distance=distance)
 
         self.projection_head = SimCLRProjectionHead(output_dim=self.output_dim)
 
@@ -151,8 +151,8 @@ class CLOP(pl.LightningModule):
         elif self.loss == "vicreg":
             loss = self.criterion(z_i, z_j)
             if self.semi_loss is not None:
-                loss += self.semi_loss(z_i, z_j, fine_label)
-                loss /= 2
+                loss = loss * 2 /3
+                loss += self.semi_loss(z_i, z_j, fine_label)/3
         else:    
             loss = self.criterion(z_i, z_j)
             if self.has_CLOP != None: 

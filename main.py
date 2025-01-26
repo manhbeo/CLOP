@@ -8,13 +8,14 @@ from linear_classifier import LinearClassifier
 import torch.nn as nn
 
 def train(epochs, batch_size, dataset, pretrain_dir = None, has_CLOP=True, loss="nxt_ent", devices=1, k=100, num_workers=9, 
-          distance="cosine", augment="auto_imgnet", lr=None, lambda_val=1.0, label_por=1.0, etf=False, semi=False):
+          distance="cosine",lr=None, lambda_val=1.0, class_per= None, label_per=1.0, etf=False, semi=False):
     if pretrain_dir != None:
         model = CLOP.load_from_checkpoint(pretrain_dir)
     else: 
-        model = CLOP(batch_size, dataset, has_CLOP, loss, devices, k, distance, lr, lambda_val, label_por, etf, semi)
+        model = CLOP(batch_size, dataset, has_CLOP, loss, devices, k, distance, lr, lambda_val, etf, semi)
     
-    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, loss=loss)
+    data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, loss=loss,
+                                   class_percentages= class_per, label_percentage=label_per)
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-{loss}')
 
     checkpoint_callback = ModelCheckpoint(
@@ -41,10 +42,10 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, has_CLOP=True, loss=
     trainer.save_checkpoint(f'{batch_size*devices}-{loss}.ckpt')
 
 
-def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", label_por=1.0, lr=None):
+def eval(pretrain_dir, batch_size, epochs, dataset, num_workers, augment="auto_imgnet", label_per=1.0, lr=None):
     model = CLOP.load_from_checkpoint(pretrain_dir)
     model.projection_head = nn.Identity()
-    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, subset_fraction=label_por)
+    data_module = CustomEvaluationDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, augment=augment, label_percentage=label_per)
 
     wandb_logger = pl.loggers.WandbLogger(project="CLOA_Eval", name=f'{dataset}-{pretrain_dir[:-5]}')
     if dataset == "cifar10": 
@@ -105,7 +106,10 @@ if __name__ == '__main__':
     parser.add_argument("--num_workers", type=int, default=9)
     parser.add_argument("--dataset", type=str)
     parser.add_argument("--distance", type=str, default="cosine")
-    parser.add_argument("--augment", type=str)
+    parser.add_argument("--class_per",
+                        type=lambda x: {int(k): float(v) for k, v in (i.split(':') for i in x.strip('{}').split(','))},
+                        default=None,
+                        help='Dictionary of class percentages. Format: "{class_idx:percentage,...}". Example: "0:0.5,1:1.0"')
     parser.add_argument("--loss", type=str)
     parser.add_argument("--has_CLOP", action='store_true')
     parser.add_argument("--extract_data", action='store_true')
@@ -119,4 +123,5 @@ if __name__ == '__main__':
         extract_data(args.dataset)
     else:
         train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.has_CLOP, args.loss, args.devices, args.k, 
-              args.num_workers, args.distance, args.augment, args.lr, args.lambda_val, args.label_por, args.etf, args.semi)
+              args.num_workers, args.distance, args.augment, args.lr, args.lambda_val, args.class_per, args.label_por,
+              args.etf, args.semi)
