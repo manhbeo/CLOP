@@ -4,11 +4,11 @@ import os
 import pytorch_lightning as pl
 import torch.distributed as dist
 from tinyimagenet import TinyImageNet
-from torch.utils.data import Subset
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Any
 import random
 import torch
-
+from PIL import Image
+random.seed(42)
 
 class CustomCIFAR100Dataset(Dataset):
     '''
@@ -343,151 +343,188 @@ class CustomDataModule(pl.LightningDataModule):
         )
 
 
+import pytorch_lightning as pl
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+from typing import Literal, Optional
+
+
 class CustomEvaluationDataModule(pl.LightningDataModule):
     '''
-    Custom datamodule for training the linear classifier with support for class-splitting and label percentage.
+    Custom datamodule for evaluation supporting:
+    Classification: Food101, CIFAR10, CIFAR100, Birdsnap, SUN397, Cars, Aircraft, DTD
+    Detection: VOC2007, OxfordPets, Caltech101, Flowers102
     '''
 
-    def __init__(self, data_dir='./data', batch_size=32, dataset="cifar100", num_workers=9,
-                 augment="rand", class_percentages: Optional[Dict[int, float]] = None,
-                 label_percentage: float = 1.0):
+    def __init__(self, data_dir: str = './data', batch_size: int = 32,
+                 dataset_type: Optional[str] = 'cifar100',
+                 task: Literal['classification', 'detection'] = 'classification',
+                 num_workers: int = 9):
         '''
         Parameters:
             data_dir (str): The base directory where the dataset is located
             batch_size (int): The number of data samples in each batch
-            dataset (str): The name of the dataset ('cifar100', 'cifar10', 'tiny_imagenet', 'imagenet')
+            dataset_type (str): Type of dataset to use
+            task (str): Whether to use classification or detection setup
             num_workers (int): The number of worker processes for data loading
-            augment (str): The type of data augmentation ('rand', 'auto', 'sim')
-            class_percentages (Dict[int, float]): Dictionary mapping class indices to percentage of samples to keep
-            label_percentage (float): Percentage of samples that will retain their labels (0.0 to 1.0)
         '''
         super().__init__()
-        self.data_dir = data_dir + "_" + dataset
+        self.data_dir = data_dir
         self.batch_size = batch_size
-        self.dataset = dataset
-        self.class_percentages = class_percentages
-        self.label_percentage = label_percentage
+        self.dataset_type = dataset_type
+        self.task = task
+        self.num_workers = num_workers
 
-        if self.dataset.startswith("cifar"):
-            resize_size = 32
-            crop_size = 32
-            if self.dataset == "cifar10":
-                normalize = transforms.Normalize(mean=[0.5071, 0.4865, 0.4409],
-                                                 std=[0.2673, 0.2564, 0.2762])
-            elif self.dataset == "cifar100":
-                normalize = transforms.Normalize(mean=[0.5071, 0.4867, 0.4408],
-                                                 std=[0.2675, 0.2565, 0.2761])
+        # Validate dataset and task combination
+        self.classification_datasets = {'food101', 'cifar10', 'cifar100', 'birdsnap',
+                                        'sun397', 'stanfordcars', 'aircraft', 'dtd'}
+        self.detection_datasets = {'voc2007', 'oxfordpets', 'caltech101', 'flowers102'}
+
+        if task == 'classification' and dataset_type not in self.classification_datasets:
+            raise ValueError(f"{dataset_type} is not a classification dataset")
+        if task == 'detection' and dataset_type not in self.detection_datasets:
+            raise ValueError(f"{dataset_type} is not a detection dataset")
+
+        # Set up dataset-specific configurations
+        self._setup_transforms()
+
+    def _setup_transforms(self):
+        """Setup appropriate transforms based on dataset type"""
+        # Set up basic parameters
+        if self.dataset_type in ['cifar10', 'cifar100']:
+            self.resize_size = 32
+            self.crop_size = 32
+            normalize = transforms.Normalize(
+                mean=[0.5071, 0.4867, 0.4408],
+                std=[0.2675, 0.2565, 0.2761]
+            )
+        else:  # All other datasets use ImageNet normalization
+            self.resize_size = 256
+            self.crop_size = 224
+            normalize = transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            )
+
+        # Set up transformations based on task
+        if self.task == 'classification':
+            if self.dataset_type in ['cifar10', 'cifar100']:
+                self.train_transform = transforms.Compose([
+                    transforms.RandomResizedCrop(32),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomApply([
+                        transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
+                    ], p=0.8),
+                    transforms.RandomGrayscale(p=0.2),
+                    transforms.ToTensor(),
+                    normalize,
+                ])
+            else:
+                self.train_transform = transforms.Compose([
+                    transforms.Resize(self.resize_size),
+                    transforms.RandomCrop(self.crop_size),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.ToTensor(),
+                    normalize,
+                ])
+        else:  # detection task
             self.train_transform = transforms.Compose([
-                transforms.RandomResizedCrop(32),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomApply([
-                    transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)
-                ], p=0.8),
-                transforms.RandomGrayscale(p=0.2),
+                transforms.Resize((self.crop_size, self.crop_size)),
                 transforms.ToTensor(),
                 normalize,
             ])
-        elif self.dataset == "imagenet":
-            resize_size = 256
-            crop_size = 224
-            normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                             std=[0.229, 0.224, 0.225])
-            self.train_transform = transforms.Compose([
-                transforms.AutoAugment(policy=transforms.AutoAugmentPolicy.IMAGENET),
-                transforms.ToTensor(),
-                normalize
-            ])
-        elif self.dataset == "tiny_imagenet":
-            resize_size = 64
-            crop_size = 64
-            normalize = transforms.Normalize(mean=[0.4802, 0.4481, 0.3975],
-                                             std=[0.2302, 0.2265, 0.2262])
-            self.train_transform = transforms.Compose([
-                transforms.RandAugment(num_ops=3, magnitude=18),
-                transforms.ToTensor(),
-                normalize
-            ])
 
+        # Val transform is always just resize and normalize
         self.val_transform = transforms.Compose([
-            transforms.Resize(resize_size),
-            transforms.CenterCrop(crop_size),
+            transforms.Resize((self.crop_size, self.crop_size)),
             transforms.ToTensor(),
-            normalize
+            normalize,
         ])
-        self.num_workers = num_workers
 
-    def _apply_class_splitting(self, dataset):
-        """Apply class-splitting based on specified percentages"""
-        if self.class_percentages is None:
-            return dataset
+    def setup(self, stage=None):
+        """Setup datasets based on type"""
+        # Classification datasets
+        if self.dataset_type == 'cifar10':
+            self.train_dataset = datasets.CIFAR10(
+                self.data_dir, train=True, transform=self.train_transform, download=True)
+            self.val_dataset = datasets.CIFAR10(
+                self.data_dir, train=False, transform=self.val_transform, download=True)
 
-        indices = []
-        labels = dataset.targets if hasattr(dataset, 'targets') else dataset.labels
+        elif self.dataset_type == 'cifar100':
+            self.train_dataset = datasets.CIFAR100(
+                self.data_dir, train=True, transform=self.train_transform, download=True)
+            self.val_dataset = datasets.CIFAR100(
+                self.data_dir, train=False, transform=self.val_transform, download=True)
 
-        # Group indices by class
-        class_indices = {}
-        for idx, label in enumerate(labels):
-            if label not in class_indices:
-                class_indices[label] = []
-            class_indices[label].append(idx)
+        elif self.dataset_type == 'food101':
+            self.train_dataset = datasets.Food101(
+                self.data_dir, split='train', transform=self.train_transform, download=True)
+            self.val_dataset = datasets.Food101(
+                self.data_dir, split='test', transform=self.val_transform, download=True)
 
-        # Apply splitting
-        for class_idx, class_indices_list in class_indices.items():
-            percentage = self.class_percentages.get(class_idx, 1.0)
-            num_samples = int(len(class_indices_list) * percentage)
-            if num_samples > 0:
-                selected_indices = random.sample(class_indices_list, num_samples)
-                indices.extend(selected_indices)
+        elif self.dataset_type == 'birdsnap':
+            self.train_dataset = datasets.Birdsnap(
+                self.data_dir, split='train', transform=self.train_transform, download=True)
+            self.val_dataset = datasets.Birdsnap(
+                self.data_dir, split='test', transform=self.val_transform, download=True)
 
-        return Subset(dataset, sorted(indices))
+        elif self.dataset_type == 'sun397':
+            self.train_dataset = datasets.SUN397(
+                self.data_dir, transform=self.train_transform, download=True)
+            self.val_dataset = datasets.SUN397(
+                self.data_dir, transform=self.val_transform, download=True)
 
-    def _apply_label_masking(self, dataset):
-        """Mask labels for a percentage of samples"""
-        if self.label_percentage >= 1.0:
-            return dataset
+        elif self.dataset_type == 'stanfordcars':
+            self.train_dataset = datasets.StanfordCars(
+                self.data_dir, split='train', transform=self.train_transform, download=True)
+            self.val_dataset = datasets.StanfordCars(
+                self.data_dir, split='test', transform=self.val_transform, download=True)
 
-        class MaskedDataset(Dataset):
-            def __init__(self, dataset, masked_indices):
-                self.dataset = dataset
-                self.masked_indices = masked_indices
+        elif self.dataset_type == 'aircraft':
+            self.train_dataset = datasets.FGVCAircraft(
+                self.data_dir, split='trainval', transform=self.train_transform, download=True)
+            self.val_dataset = datasets.FGVCAircraft(
+                self.data_dir, split='test', transform=self.val_transform, download=True)
 
-            def __getitem__(self, index):
-                data, label = self.dataset[index]
-                if index in self.masked_indices:
-                    label = -1
-                return data, label
+        elif self.dataset_type == 'dtd':
+            self.train_dataset = datasets.DTD(
+                self.data_dir, split='train', transform=self.train_transform, download=True)
+            self.val_dataset = datasets.DTD(
+                self.data_dir, split='test', transform=self.val_transform, download=True)
 
-            def __len__(self):
-                return len(self.dataset)
+        # Detection datasets
+        elif self.dataset_type == 'voc2007':
+            self.train_dataset = datasets.VOCDetection(
+                self.data_dir, year='2007', image_set='train',
+                transform=self.train_transform, download=True)
+            self.val_dataset = datasets.VOCDetection(
+                self.data_dir, year='2007', image_set='val',
+                transform=self.val_transform, download=True)
 
-        num_samples = len(dataset)
-        num_masked = int(num_samples * (1 - self.label_percentage))
-        masked_indices = set(random.sample(range(num_samples), num_masked))
+        elif self.dataset_type == 'oxfordpets':
+            self.train_dataset = datasets.OxfordIIITPet(
+                self.data_dir, split='trainval', transform=self.train_transform, download=True)
+            self.val_dataset = datasets.OxfordIIITPet(
+                self.data_dir, split='test', transform=self.val_transform, download=True)
 
-        return MaskedDataset(dataset, masked_indices)
+        elif self.dataset_type == 'caltech101':
+            dataset = datasets.Caltech101(self.data_dir, download=True)
+            total_size = len(dataset)
+            train_size = int(0.8 * total_size)
+            indices = torch.randperm(total_size).tolist()
+            train_indices = indices[:train_size]
+            val_indices = indices[train_size:]
 
-    def setup(self, stage):
-        if self.dataset == "cifar100":
-            train_dataset = datasets.CIFAR100(self.data_dir, train=True,
-                                              transform=self.train_transform, download=True)
-            self.val_dataset = datasets.CIFAR100(self.data_dir, train=False,
-                                                 transform=self.val_transform, download=True)
-        elif self.dataset == "imagenet":
-            train_dataset = datasets.ImageNet(self.data_dir, split='train',
-                                              transform=self.train_transform)
-            self.val_dataset = datasets.ImageNet(self.data_dir, split='val',
-                                                 transform=self.val_transform)
-        elif self.dataset == "tiny_imagenet":
-            train_dataset = TinyImageNet(self.data_dir, split='train',
-                                         transform=self.train_transform, download=True)
-            self.val_dataset = TinyImageNet(self.data_dir, split='val',
-                                            transform=self.val_transform, download=True)
+            self.train_dataset = torch.utils.data.Subset(
+                datasets.Caltech101(self.data_dir, transform=self.train_transform), train_indices)
+            self.val_dataset = torch.utils.data.Subset(
+                datasets.Caltech101(self.data_dir, transform=self.val_transform), val_indices)
 
-        # Apply class splitting
-        train_dataset = self._apply_class_splitting(train_dataset)
-
-        # Apply label masking
-        self.train_dataset = self._apply_label_masking(train_dataset)
+        elif self.dataset_type == 'flowers102':
+            self.train_dataset = datasets.Flowers102(
+                self.data_dir, split='train', transform=self.train_transform, download=True)
+            self.val_dataset = datasets.Flowers102(
+                self.data_dir, split='test', transform=self.val_transform, download=True)
 
     def train_dataloader(self):
         return DataLoader(
