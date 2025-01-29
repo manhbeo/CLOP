@@ -36,7 +36,7 @@ def train(epochs, batch_size, dataset, pretrain_dir = None, has_CLOP=True, loss=
     class_per = read_class_percentages(class_per_dir)
     data_module = CustomDataModule(batch_size=batch_size, dataset=dataset, num_workers=num_workers, loss=loss,
                                    class_percentages= class_per, label_percentage=label_per)
-    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-{loss}')
+    wandb_logger = pl.loggers.WandbLogger(project="CLOA_Train", name=f'{dataset}-{batch_size*devices}-{loss}-CLOP={has_CLOP}')
 
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
@@ -254,4 +254,4 @@ if __name__ == '__main__':
         extract_data(args.dataset)
     else:
         train(args.epochs, args.batch_size, args.dataset, args.pretrain_dir, args.has_CLOP, args.loss, args.devices, args.k, 
-              args.num_workers, args.distance, args.lr, args.lambda_val, args.class_per, args.label_por, args.etf, args.semi)
+              args.num_workers, args.distance, args.lr, args.lambda_val, args.class_per_file, args.label_por, args.etf, args.semi)
