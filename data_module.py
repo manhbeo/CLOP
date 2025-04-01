@@ -1,13 +1,14 @@
-from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Dataset
 import os
-import pytorch_lightning as pl
 import torch.distributed as dist
 from tinyimagenet import TinyImageNet
-from typing import Dict, Optional, Tuple, Any
+from typing import Dict, Tuple
 import random
 import torch
-from PIL import Image
+import pytorch_lightning as pl
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+from typing import Literal, Optional
 random.seed(42)
 
 class CustomCIFAR100Dataset(Dataset):
@@ -341,13 +342,6 @@ class CustomDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers
         )
-
-
-import pytorch_lightning as pl
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-from typing import Literal, Optional
-
 
 class CustomEvaluationDataModule(pl.LightningDataModule):
     '''

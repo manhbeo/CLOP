@@ -12,6 +12,7 @@ from LARs import LARS
 import math
 from lightly.utils.scheduler import CosineWarmupScheduler
 import torch.nn.functional as F
+from torchvision.models.resnet import Bottleneck
 
 class ResNet50_small(nn.Module):
     '''
@@ -19,13 +20,22 @@ class ResNet50_small(nn.Module):
     '''
     def __init__(self):
         super(ResNet50_small, self).__init__()
-        self.resnet50 = models.resnet50(weights=None)
-        self.resnet50.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.resnet50.maxpool = nn.Identity()  
-        self.resnet50.fc = nn.Identity()  
+        width_multiplier = 4
+        base_width = 64 * width_multiplier
+        # Create a ResNet-50 with 4x width
+        self.resnet50 = models.ResNet(
+            block=Bottleneck,
+            layers=[3, 4, 6, 3],  # ResNet-50 layer configuration
+            width_per_group=base_width  # 4x wider than standard ResNet-50
+        )
+        # Replace the first 7x7 Conv with a 3x3 Conv of stride 1
+        self.resnet50.conv1 = nn.Conv2d(3, base_width, kernel_size=3, stride=1, padding=1, bias=False)
+        self.resnet50.maxpool = nn.Identity()
+        self.resnet50.fc = nn.Identity()
     def forward(self, x):
         x = self.resnet50(x)
         return F.normalize(x, dim=1)
+
 
 class ResNet50(nn.Module):
     '''
@@ -33,8 +43,17 @@ class ResNet50(nn.Module):
     '''
     def __init__(self):
         super(ResNet50, self).__init__()
-        self.resnet50 = models.resnet50(weights=None)
-        self.resnet50.fc = nn.Identity()  
+        # Base width of standard ResNet-50 is 64, we'll use 256 (4x)
+        width_multiplier = 4
+        base_width = 64 * width_multiplier
+        # Create a modified ResNet with 4x width
+        self.resnet50 = models.ResNet(
+            block=Bottleneck,
+            layers=[3, 4, 6, 3],  # ResNet-50 layer configuration
+            width_per_group=base_width  # 4x wider than standard ResNet-50
+        )
+        # Replace the final fully connected layer with an identity
+        self.resnet50.fc = nn.Identity()
     def forward(self, x):
         x = self.resnet50(x)
         return F.normalize(x, dim=1)

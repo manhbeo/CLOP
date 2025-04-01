@@ -108,7 +108,7 @@ def eval(pretrain_dir: str,
 
     # Linear Classification Evaluation
     if 'linear' in tasks:
-        model_linear = model.copy()
+        model_linear = model
         model_linear.projection_head = nn.Identity()
 
         data_module = CustomEvaluationDataModule(
@@ -162,7 +162,7 @@ def eval(pretrain_dir: str,
 
     # Detection Evaluation
     if 'detection' in tasks and dataset_type in ['voc2007', 'oxfordpets', 'caltech101', 'flowers102']:
-        model_detection = model.copy()
+        model_detection = model
 
         data_module = CustomEvaluationDataModule(
             batch_size=batch_size,
